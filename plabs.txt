@@ -1,0 +1,19 @@
+game itself:
+
+based on civilizations evolving
+
+research tab and main tab, maybe settings and about additionally
+research will be scrollable tree
+initial upgrade to unlock research for 0 "points"
+maybe pixel art for upgrades but save that for after game works
+on main tab button with text "blessing of life" that creates 1 human
+each human can provide 1 research point, can work diff jobs
+people need food, housing, third thing i haven't thought of
+upgrades unlock new ways to obtain things
+
+upgrades:
+civilization - desc - 0 "points"
+
+
+coding:
+subdivide button types into classes (upgradebutton,menubutton) inheriting from Button 

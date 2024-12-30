@@ -12,6 +12,7 @@ humans = 0
 hunters = 0
 scholars = 0
 unemployed = 0
+scholar_points=0
 button_font = pg.font.SysFont('Corbel', 35, True)
 text_font = pg.font.SysFont('Corbel', 50)
 clock = pg.time.Clock()
@@ -21,7 +22,7 @@ running = True
 button_clicked = False
 frame = 0
 humans_base = 2
-food = 0
+food = 10
 civ = False
 current_scene = "home"
 pg.display.set_caption("untitled incremental game")
@@ -158,6 +159,18 @@ def eat():
     global humans
     global food
     food -= humans
+    if food<0:
+        humans+=food
+        food=0
+
+def work():
+    global hunters
+    global scholars
+    global food
+    global scholar_points
+    food+=hunters*2
+    scholar_points+=scholars
+
 
 
 def research_test(id):
@@ -175,7 +188,18 @@ def hunter_increase():
         hunters += 1
 
 def hunter_decrease():
+    global hunters
     hunters -= 1
+def scholar_increase():
+    global scholars
+    global unemployed
+    if unemployed > 0:
+        scholars += 1
+
+def scholar_decrease():
+    global scholars
+    scholars -= 1
+
 
 home_tab = TabButton("home", home)
 research_tab = TabButton("research", research)
@@ -183,8 +207,10 @@ settings_tab = TabButton("settings", settings, )
 about_tab = TabButton("about", about)
 
 spawn_button = Button("Bless with life", spawn, width=400)
-hunter_increase_button = Button(">", hunter_increase, width=50,height=50 ,x=310, y=300)
-hunter_decrease_button = Button("<", hunter_decrease, width=50,height=50 ,x=90, y=300)
+hunter_increase_button = Button(">", hunter_increase, width=50,height=50 ,x=350, y=300)
+hunter_decrease_button = Button("<", hunter_decrease, width=50,height=50 ,x=50, y=300)
+scholar_increase_button = Button(">", scholar_increase, width=50,height=50 ,x=350, y=400)
+scholar_decrease_button = Button("<", scholar_decrease, width=50,height=50 ,x=50, y=400)
 civilization = ResearchButton(research_test, "Civilization", "The dawn of your society \n allows life and research",
                               "civ", 1)
 layer_1 = [civilization]
@@ -200,7 +226,7 @@ testbutton5 = ResearchButton(research_test, "test of next layer", "if this doesn
                              requirements=[i for i in layer_2])
 layer_3 = [testbutton5]
 tab_buttons = [home_tab, research_tab, settings_tab, about_tab]
-home_buttons = [spawn_button, hunter_increase_button, hunter_decrease_button]
+home_buttons = [spawn_button, hunter_increase_button, hunter_decrease_button,scholar_increase_button,scholar_decrease_button]
 research_buttons = [civilization, testbutton2, testbutton3, testbutton4, testbutton5]
 
 buttons_list = [tab_buttons, home_buttons, research_buttons]
@@ -229,10 +255,14 @@ while running:
         home_rect = home_text.get_rect()
         home_rect.center = (500, 500)
         screen.blit(home_text, home_rect)
-        hunter_text = text_font.render('hunters', True, (0, 0, 0))
+        hunter_text = text_font.render(f'{hunters} hunters', True, (0, 0, 0))
         hunter_rect = hunter_text.get_rect()
         hunter_rect.center = (200, 300)
         screen.blit(hunter_text, hunter_rect)
+        scholar_text = text_font.render(f'{scholars} scholars', True, (0, 0, 0))
+        scholar_rect = scholar_text.get_rect()
+        scholar_rect.center = (200, 400)
+        screen.blit(scholar_text, scholar_rect)
 
     if current_scene == "research":
         for button in home_buttons:
@@ -325,7 +355,9 @@ while running:
         breed()
         seconds += 1
         if seconds % 5 == 0:
+            work()
             eat()
+        work()
         frame = 0
     clock.tick(60)
 pg.quit()

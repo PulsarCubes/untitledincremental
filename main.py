@@ -9,6 +9,9 @@ from math import floor
 pg.init()
 
 humans = 0
+hunters = 0
+scholars = 0
+unemployed = 0
 button_font = pg.font.SysFont('Corbel', 35, True)
 text_font = pg.font.SysFont('Corbel', 50)
 clock = pg.time.Clock()
@@ -41,10 +44,10 @@ class Button():
             x, y = self.x, self.y
         self.button_rect.center = (x, y)
         if hover:
-            pg.draw.rect(screen, (150, 150, 150), self.button_rect, width=5, border_radius=1)
+            pg.draw.rect(screen, (150, 150, 150), self.button_rect, width=4, border_radius=1)
             text = button_font.render(self.text, True, (150, 150, 150))
         else:
-            pg.draw.rect(screen, (0, 0, 0), self.button_rect, width=5, border_radius=1)
+            pg.draw.rect(screen, (0, 0, 0), self.button_rect, width=4, border_radius=1)
             text = button_font.render(self.text, True, (0, 0, 0))
 
         text_rect = text.get_rect()
@@ -166,10 +169,13 @@ def research_test(id):
 
 
 def hunter_increase():
-    pass
+    global hunters
+    global unemployed
+    if unemployed > 0:
+        hunters += 1
 
 def hunter_decrease():
-    pass
+    hunters -= 1
 
 home_tab = TabButton("home", home)
 research_tab = TabButton("research", research)
@@ -177,8 +183,8 @@ settings_tab = TabButton("settings", settings, )
 about_tab = TabButton("about", about)
 
 spawn_button = Button("Bless with life", spawn, width=400)
-hunter_increase_button = Button(">", hunter_increase, width=50,height=50 ,x=200, y=300)
-hunter_decrease_button = Button("<", hunter_decrease, width=50,height=50 ,x=100, y=300)
+hunter_increase_button = Button(">", hunter_increase, width=50,height=50 ,x=310, y=300)
+hunter_decrease_button = Button("<", hunter_decrease, width=50,height=50 ,x=90, y=300)
 civilization = ResearchButton(research_test, "Civilization", "The dawn of your society \n allows life and research",
                               "civ", 1)
 layer_1 = [civilization]
@@ -223,6 +229,10 @@ while running:
         home_rect = home_text.get_rect()
         home_rect.center = (500, 500)
         screen.blit(home_text, home_rect)
+        hunter_text = text_font.render('hunters', True, (0, 0, 0))
+        hunter_rect = hunter_text.get_rect()
+        hunter_rect.center = (200, 300)
+        screen.blit(hunter_text, hunter_rect)
 
     if current_scene == "research":
         for button in home_buttons:
@@ -299,6 +309,7 @@ while running:
                             if button_clicked:
                                 button.func()
                                 button_clicked = False
+
     humans_text = text_font.render(f'{humans} {"people" if humans != 1 else "person"}', True, (0, 0, 0))
     humans_rect = humans_text.get_rect()
     humans_rect.center = (100, 50)
@@ -307,12 +318,13 @@ while running:
     food_rect = food_rext.get_rect()
     food_rect.center = (80, 100)
     screen.blit(food_rext, food_rect)
+    unemployed = humans - hunters - scholars
     pg.display.update()
     frame += 1
     if frame == 60:
         breed()
         seconds += 1
-        if seconds % 2 == 0:
+        if seconds % 5 == 0:
             eat()
         frame = 0
     clock.tick(60)

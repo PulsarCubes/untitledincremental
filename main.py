@@ -86,25 +86,26 @@ class ResearchButton(Button):
 
     def draw(self, x, y, num, hover=False):
         width = 500
-        buttons_in_layer = [button for button in research_buttons if button.layer == self.layer]
         button_spacing = 20
-        research_buttons_width = width * len(buttons_in_layer) + 30 * len(buttons_in_layer)
+        index = layers[self.layer].index(self)
+        research_buttons_width = width * len(layers[self.layer]) + button_spacing * (len(layers[self.layer])-1)
         title_font = pg.font.SysFont('Corbel', 50, True)
         desc_font = pg.font.SysFont('Corbel', 30)
         desc_text = desc_font.render(self.desc, True, (0, 0, 0))
         title_text = title_font.render(self.title, True, (0, 0, 0))
         title_rect = title_text.get_rect()
-        start_x = (screen_width - research_buttons_width) / 2
+        start_x = (screen_width - research_buttons_width) // 2
         moved_x = start_x + num * (width + button_spacing)
-        moved_y = self.layer * 200 + 150
+        moved_y = self.layer * 300
 
-        title_rect.center = (moved_x + width / 2, moved_y)
+        title_rect.center = (moved_x + width // 2, moved_y)
         desc_rect = desc_text.get_rect()
         desc_rect.y = title_rect.bottom
-        desc_rect.centerx = moved_x + width / 2
+        desc_rect.centerx = moved_x + width // 2
         self.button_rect = title_rect.union(desc_rect)
         self.button_rect.inflate_ip(width - self.button_rect.width, 20)
-
+        self.button_rect.height = 175
+        self.button_rect.centerx = moved_x + width // 2
         if hover or self.used:
             pg.draw.rect(screen, (150, 150, 150), self.button_rect, width=5, border_radius=1)
             desc_text = desc_font.render(self.desc, True, (150, 150, 150))
@@ -113,9 +114,18 @@ class ResearchButton(Button):
             pg.draw.rect(screen, (0, 0, 0), self.button_rect, width=5, border_radius=1)
             desc_text = desc_font.render(self.desc, True, (0, 0, 0))
             title_text = title_font.render(self.title, True, (0, 0, 0))
-
         screen.blit(title_text, title_rect)
         screen.blit(desc_text, desc_rect)
+        pg.draw.line(screen,(0,0,0),self.button_rect.midbottom, (self.button_rect.centerx,self.button_rect.bottom+50),4)
+        if self.layer != 1:
+            pg.draw.line(screen,(0,0,0),self.button_rect.midtop, (self.button_rect.centerx,self.button_rect.top-75),4)
+
+            if index == len(layers[self.layer]) - 1:
+                if len(layers[self.layer]) >= len(layers[self.layer - 1]):
+                    pg.draw.line(screen,(0,0,0),(self.button_rect.centerx,self.button_rect.top-75),(self.button_rect.centerx-(research_buttons_width-width),self.button_rect.top-75),4)
+                else:
+                    pg.draw.line(screen, (0, 0, 0), (self.button_rect.centerx + ((width/2)*(len(layers[self.layer-1])-(index+1)))+12, self.button_rect.top - 75), (self.button_rect.centerx - ((width * len(layers[self.layer-1]) + button_spacing * (len(layers[self.layer-1])-1)) - width * 1.5 - 10), self.button_rect.top - 75), 4)
+
 
     def is_researchable(self):
         return all([req.used for req in self.requirements])
@@ -159,9 +169,9 @@ def eat():
     global humans
     global food
     food -= humans
-    if food<0:
-        humans+=food
-        food=0
+    if food < 0:
+        humans += food
+        food = 0
 
 def work():
     global hunters
@@ -224,10 +234,17 @@ testbutton4 = ResearchButton(research_test, "test of fourth research", "wow this
 layer_2 = [testbutton2, testbutton3, testbutton4]
 testbutton5 = ResearchButton(research_test, "test of next layer", "if this doesnt break i will nut", "guh", 3,
                              requirements=[i for i in layer_2])
-layer_3 = [testbutton5]
+testbutton6 = ResearchButton(research_test, "test of next layer", "if this doesnt break i will nut", "guh", 3,
+                             requirements=[i for i in layer_2])
+layer_3 = [testbutton5,testbutton6]
+layers = {
+    1: layer_1,
+    2: layer_2,
+    3: layer_3
+}
 tab_buttons = [home_tab, research_tab, settings_tab, about_tab]
 home_buttons = [spawn_button, hunter_increase_button, hunter_decrease_button,scholar_increase_button,scholar_decrease_button]
-research_buttons = [civilization, testbutton2, testbutton3, testbutton4, testbutton5]
+research_buttons = [civilization, testbutton2, testbutton3, testbutton4, testbutton5,testbutton6]
 
 buttons_list = [tab_buttons, home_buttons, research_buttons]
 
@@ -323,7 +340,7 @@ while running:
                                     if button.is_researchable():
                                         button.func(button.id)
                                         button.used = True
-                        elif button.layer == 3 and button.is_researchable():
+                        elif button.layer == 3:
                             button.draw(400, 400, layer_3.index(button))
                             if pg.Rect.collidepoint(button.button_rect, mouse_x, mouse_y):
                                 button.draw(400, 400, layer_3.index(button), True)
@@ -344,10 +361,10 @@ while running:
     humans_rect = humans_text.get_rect()
     humans_rect.center = (100, 50)
     screen.blit(humans_text, humans_rect)
-    food_rext = text_font.render(f'{food} food', True, (0, 0, 0))
-    food_rect = food_rext.get_rect()
+    food_text = text_font.render(f'{food} food', True, (0, 0, 0))
+    food_rect = food_text.get_rect()
     food_rect.center = (80, 100)
-    screen.blit(food_rext, food_rect)
+    screen.blit(food_text, food_rect)
     unemployed = humans - hunters - scholars
     pg.display.update()
     frame += 1

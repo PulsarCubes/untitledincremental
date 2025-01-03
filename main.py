@@ -88,7 +88,8 @@ class ResearchButton(Button):
         width = 500
         button_spacing = 20
         index = layers[self.layer].index(self)
-        research_buttons_width = width * len(layers[self.layer]) + button_spacing * (len(layers[self.layer])-1)
+        num_in_layer = len(layers[self.layer])
+        research_buttons_width = width * num_in_layer + button_spacing * (num_in_layer-1)
         title_font = pg.font.SysFont('Corbel', 50, True)
         desc_font = pg.font.SysFont('Corbel', 30)
         desc_text = desc_font.render(self.desc, True, (0, 0, 0))
@@ -114,17 +115,23 @@ class ResearchButton(Button):
             pg.draw.rect(screen, (0, 0, 0), self.button_rect, width=5, border_radius=1)
             desc_text = desc_font.render(self.desc, True, (0, 0, 0))
             title_text = title_font.render(self.title, True, (0, 0, 0))
+        print(self.layer)
+        print(self.button_rect.centerx)
         screen.blit(title_text, title_rect)
         screen.blit(desc_text, desc_rect)
         pg.draw.line(screen,(0,0,0),self.button_rect.midbottom, (self.button_rect.centerx,self.button_rect.bottom+50),4)
         if self.layer != 1:
             pg.draw.line(screen,(0,0,0),self.button_rect.midtop, (self.button_rect.centerx,self.button_rect.top-75),4)
-
-            if index == len(layers[self.layer]) - 1:
-                if len(layers[self.layer]) >= len(layers[self.layer - 1]):
+            num_in_previous = len(layers[self.layer - 1])
+            if index == num_in_layer - 1:
+                if num_in_layer >= num_in_previous:
                     pg.draw.line(screen,(0,0,0),(self.button_rect.centerx,self.button_rect.top-75),(self.button_rect.centerx-(research_buttons_width-width),self.button_rect.top-75),4)
                 else:
-                    pg.draw.line(screen, (0, 0, 0), (self.button_rect.centerx + ((width/2)*(len(layers[self.layer-1])-(index+1)))+12, self.button_rect.top - 75), (self.button_rect.centerx - ((width * len(layers[self.layer-1]) + button_spacing * (len(layers[self.layer-1])-1)) - width * 1.5 - 10), self.button_rect.top - 75), 4)
+                    pg.draw.line(screen,
+                                 (0, 0, 0),
+                                 (self.button_rect.centerx + (((width+button_spacing)/2)*(num_in_previous-(index+1))), self.button_rect.top - 75),
+                                 (self.button_rect.centerx - ((width * num_in_previous + button_spacing * (num_in_previous-(1+((num_in_previous-(index+1))*.5)))) - width * (1+((num_in_previous-(index+1))*.5))), self.button_rect.top - 75),
+                                 4)
 
 
     def is_researchable(self):
@@ -234,9 +241,8 @@ testbutton4 = ResearchButton(research_test, "test of fourth research", "wow this
 layer_2 = [testbutton2, testbutton3, testbutton4]
 testbutton5 = ResearchButton(research_test, "test of next layer", "if this doesnt break i will nut", "guh", 3,
                              requirements=[i for i in layer_2])
-testbutton6 = ResearchButton(research_test, "test of next layer", "if this doesnt break i will nut", "guh", 3,
-                             requirements=[i for i in layer_2])
-layer_3 = [testbutton5,testbutton6]
+
+layer_3 = [testbutton5]
 layers = {
     1: layer_1,
     2: layer_2,
@@ -244,7 +250,7 @@ layers = {
 }
 tab_buttons = [home_tab, research_tab, settings_tab, about_tab]
 home_buttons = [spawn_button, hunter_increase_button, hunter_decrease_button,scholar_increase_button,scholar_decrease_button]
-research_buttons = [civilization, testbutton2, testbutton3, testbutton4, testbutton5,testbutton6]
+research_buttons = [civilization, testbutton2, testbutton3, testbutton4, testbutton5]
 
 buttons_list = [tab_buttons, home_buttons, research_buttons]
 

@@ -4,10 +4,11 @@ from math import floor
 #remember to use pygbag you pygfag
 
 #happiness? resources? adsdasdasdasdasdasasdasd
-
+#TODO adjust button sizes based on window size, scrolling guhhh
 
 pg.init()
 
+state = 1
 humans = 0
 hunters = 0
 scholars = 0
@@ -27,9 +28,11 @@ civ = False
 current_scene = "home"
 pg.display.set_caption("untitled incremental game")
 seconds = 0
+user_color_1 = (0,0,0)
+user_color_2 = (255,255,255)
 
 
-class Button():
+class Button:
     def __init__(self, text, func, width=150, height=75, enabled=True, x=None, y=None):
         self.text = text
         self.width = width
@@ -48,15 +51,15 @@ class Button():
             pg.draw.rect(screen, (150, 150, 150), self.button_rect, width=4, border_radius=1)
             text = button_font.render(self.text, True, (150, 150, 150))
         else:
-            pg.draw.rect(screen, (0, 0, 0), self.button_rect, width=4, border_radius=1)
-            text = button_font.render(self.text, True, (0, 0, 0))
+            pg.draw.rect(screen, user_color_1, self.button_rect, width=4, border_radius=1)
+            text = button_font.render(self.text, True, user_color_1)
 
         text_rect = text.get_rect()
         text_rect.center = self.button_rect.center
         screen.blit(text, text_rect)
 
 
-#TODO adjust button sizes based on window size
+
 class TabButton(Button):
     def __init__(self, text, func, width=150, height=75):
         super().__init__(text, func, width, height, enabled=True)
@@ -92,8 +95,8 @@ class ResearchButton(Button):
         research_buttons_width = width * num_in_layer + button_spacing * (num_in_layer-1)
         title_font = pg.font.SysFont('Corbel', 50, True)
         desc_font = pg.font.SysFont('Corbel', 30)
-        desc_text = desc_font.render(self.desc, True, (0, 0, 0))
-        title_text = title_font.render(self.title, True, (0, 0, 0))
+        desc_text = desc_font.render(self.desc, True, user_color_1)
+        title_text = title_font.render(self.title, True, user_color_1)
         title_rect = title_text.get_rect()
         start_x = (screen_width - research_buttons_width) // 2
         moved_x = start_x + num * (width + button_spacing)
@@ -112,23 +115,21 @@ class ResearchButton(Button):
             desc_text = desc_font.render(self.desc, True, (150, 150, 150))
             title_text = title_font.render(self.title, True, (150, 150, 150))
         else:
-            pg.draw.rect(screen, (0, 0, 0), self.button_rect, width=5, border_radius=1)
-            desc_text = desc_font.render(self.desc, True, (0, 0, 0))
-            title_text = title_font.render(self.title, True, (0, 0, 0))
-        print(self.layer)
-        print(self.button_rect.centerx)
+            pg.draw.rect(screen, user_color_1, self.button_rect, width=5, border_radius=1)
+            desc_text = desc_font.render(self.desc, True, user_color_1)
+            title_text = title_font.render(self.title, True, user_color_1)
         screen.blit(title_text, title_rect)
         screen.blit(desc_text, desc_rect)
-        pg.draw.line(screen,(0,0,0),self.button_rect.midbottom, (self.button_rect.centerx,self.button_rect.bottom+50),4)
+        pg.draw.line(screen,user_color_1,self.button_rect.midbottom, (self.button_rect.centerx,self.button_rect.bottom+50),4)
         if self.layer != 1:
-            pg.draw.line(screen,(0,0,0),self.button_rect.midtop, (self.button_rect.centerx,self.button_rect.top-75),4)
+            pg.draw.line(screen,user_color_1,self.button_rect.midtop, (self.button_rect.centerx,self.button_rect.top-75),4)
             num_in_previous = len(layers[self.layer - 1])
             if index == num_in_layer - 1:
                 if num_in_layer >= num_in_previous:
-                    pg.draw.line(screen,(0,0,0),(self.button_rect.centerx,self.button_rect.top-75),(self.button_rect.centerx-(research_buttons_width-width),self.button_rect.top-75),4)
+                    pg.draw.line(screen,user_color_1,(self.button_rect.centerx,self.button_rect.top-75),(self.button_rect.centerx-(research_buttons_width-width),self.button_rect.top-75),4)
                 else:
                     pg.draw.line(screen,
-                                 (0, 0, 0),
+                                 user_color_1,
                                  (self.button_rect.centerx + (((width+button_spacing)/2)*(num_in_previous-(index+1))), self.button_rect.top - 75),
                                  (self.button_rect.centerx - ((width * num_in_previous + button_spacing * (num_in_previous-(1+((num_in_previous-(index+1))*.5)))) - width * (1+((num_in_previous-(index+1))*.5))), self.button_rect.top - 75),
                                  4)
@@ -188,7 +189,18 @@ def work():
     food+=hunters*2
     scholar_points+=scholars
 
-
+def color_set():
+    global state
+    global user_color_1
+    global user_color_2
+    if state == 1:
+        user_color_1 = (255,255,255)
+        user_color_2 = (25, 27, 29)
+        state = 0
+    else:
+        user_color_1 = (0,0,0)
+        user_color_2 = (255,255,255)
+        state = 1
 
 def research_test(id):
     global civ
@@ -228,8 +240,10 @@ hunter_increase_button = Button(">", hunter_increase, width=50,height=50 ,x=350,
 hunter_decrease_button = Button("<", hunter_decrease, width=50,height=50 ,x=50, y=300)
 scholar_increase_button = Button(">", scholar_increase, width=50,height=50 ,x=350, y=400)
 scholar_decrease_button = Button("<", scholar_decrease, width=50,height=50 ,x=50, y=400)
+
+
 civilization = ResearchButton(research_test, "Civilization", "The dawn of your society \n allows life and research",
-                              "civ", 1)
+                       "civ", 1)
 layer_1 = [civilization]
 testbutton2 = ResearchButton(research_test, "test of second research", "wow this is so incredibly incredible", "guh", 2,
                              requirements=[civilization])
@@ -248,16 +262,19 @@ layers = {
     2: layer_2,
     3: layer_3
 }
+
+theme_button = Button("switch theme", color_set,x=800,y=200, width=250)
+
 tab_buttons = [home_tab, research_tab, settings_tab, about_tab]
 home_buttons = [spawn_button, hunter_increase_button, hunter_decrease_button,scholar_increase_button,scholar_decrease_button]
-research_buttons = [civilization, testbutton2, testbutton3, testbutton4, testbutton5]
-
-buttons_list = [tab_buttons, home_buttons, research_buttons]
+research_buttons = [button for layer in [layer_1, layer_2, layer_3] for button in layer]
+settings_buttons = [theme_button]
+buttons_list = [tab_buttons, home_buttons, research_buttons,settings_buttons]
 
 home()
 
 while running:
-    screen.fill((255, 255, 255))
+    screen.fill(user_color_2)
     screen_width, screen_height = screen.get_size()
     mouse_x, mouse_y = pg.mouse.get_pos()
     tab_button = 0
@@ -272,27 +289,29 @@ while running:
     if current_scene == "home":
         for button in home_buttons:
             button.enabled = True
-        for button in research_buttons:
-            button.enabled = False
-        home_text = text_font.render('home', True, (0, 0, 0))
+        for list in research_buttons, settings_buttons:
+            for button in list:
+                button.enabled = False
+        home_text = text_font.render('home', True, user_color_1)
         home_rect = home_text.get_rect()
         home_rect.center = (500, 500)
         screen.blit(home_text, home_rect)
-        hunter_text = text_font.render(f'{hunters} hunters', True, (0, 0, 0))
+        hunter_text = text_font.render(f'{hunters} hunters', True, user_color_1)
         hunter_rect = hunter_text.get_rect()
         hunter_rect.center = (200, 300)
         screen.blit(hunter_text, hunter_rect)
-        scholar_text = text_font.render(f'{scholars} scholars', True, (0, 0, 0))
+        scholar_text = text_font.render(f'{scholars} scholars', True, user_color_1)
         scholar_rect = scholar_text.get_rect()
         scholar_rect.center = (200, 400)
         screen.blit(scholar_text, scholar_rect)
 
     if current_scene == "research":
-        for button in home_buttons:
-            button.enabled = False
+        for list in home_buttons, settings_buttons:
+            for button in list:
+                button.enabled = False
         for button in research_buttons:
             button.enabled = True
-        research_text = text_font.render('', True, (0, 0, 0))
+        research_text = text_font.render('', True, user_color_1)
         research_rect = research_text.get_rect()
         research_rect.center = (500, 500)
         screen.blit(research_text, research_rect)
@@ -301,21 +320,22 @@ while running:
         for list in home_buttons, research_buttons:
             for button in list:
                 button.enabled = False
-        settings_text = text_font.render('settings', True, (0, 0, 0))
+        for button in settings_buttons:
+            button.enabled = True
+        settings_text = text_font.render('settings', True, user_color_1)
         settings_rect = settings_text.get_rect()
         settings_rect.center = (500, 500)
         screen.blit(settings_text, settings_rect)
 
     elif current_scene == "about":
-        for list in home_buttons, research_buttons:
+        for list in home_buttons, research_buttons, settings_buttons:
             for button in list:
                 button.enabled = False
-        about_text = text_font.render('this really pulsars my cubes', False, (0, 0, 0))
+        about_text = text_font.render('this really pulsars my cubes', False, user_color_1)
         about_rect = about_text.get_rect()
         about_rect.center = (700, 700)
         screen.blit(about_text, about_rect)
-
-        #button loooop
+                    #button loooop
     for list in buttons_list:
         for button in list:
             if button.enabled:
@@ -327,8 +347,7 @@ while running:
                             button.func()
                             button_clicked = False
                     tab_button += 1
-
-                if civ or button is civilization:
+                if civ or button is civilization or button in settings_buttons:
                     if isinstance(button, ResearchButton):
                         if button.layer == 1:
                             button.draw(400, 400, 0)
@@ -362,12 +381,11 @@ while running:
                             if button_clicked:
                                 button.func()
                                 button_clicked = False
-
-    humans_text = text_font.render(f'{humans} {"people" if humans != 1 else "person"}', True, (0, 0, 0))
+    humans_text = text_font.render(f'{humans} {"people" if humans != 1 else "person"}', True, user_color_1)
     humans_rect = humans_text.get_rect()
     humans_rect.center = (100, 50)
     screen.blit(humans_text, humans_rect)
-    food_text = text_font.render(f'{food} food', True, (0, 0, 0))
+    food_text = text_font.render(f'{food} food', True, user_color_1)
     food_rect = food_text.get_rect()
     food_rect.center = (80, 100)
     screen.blit(food_text, food_rect)

@@ -8,6 +8,9 @@ from math import floor
 
 pg.init()
 
+scroll_y = 0
+scroll_speed = 20
+total_research_height = 0
 state = 1
 humans = 0
 hunters = 0
@@ -92,7 +95,7 @@ class ResearchButton(Button):
         button_spacing = 20
         index = layers[self.layer].index(self)
         num_in_layer = len(layers[self.layer])
-        research_buttons_width = width * num_in_layer + button_spacing * (num_in_layer-1)
+        research_buttons_width = width * num_in_layer + button_spacing * (num_in_layer - 1)
         title_font = pg.font.SysFont('Corbel', 50, True)
         desc_font = pg.font.SysFont('Corbel', 30)
         desc_text = desc_font.render(self.desc, True, user_color_1)
@@ -100,7 +103,13 @@ class ResearchButton(Button):
         title_rect = title_text.get_rect()
         start_x = (screen_width - research_buttons_width) // 2
         moved_x = start_x + num * (width + button_spacing)
-        moved_y = self.layer * 300
+
+
+        moved_y = self.layer * 300 + scroll_y
+
+
+        if moved_y + 175 < 0 or moved_y > screen_height:
+            self.button_rect = pg.Rect(moved_x, moved_y, width, 175)
 
         title_rect.center = (moved_x + width // 2, moved_y)
         desc_rect = desc_text.get_rect()
@@ -110,6 +119,7 @@ class ResearchButton(Button):
         self.button_rect.inflate_ip(width - self.button_rect.width, 20)
         self.button_rect.height = 175
         self.button_rect.centerx = moved_x + width // 2
+
         if hover or self.used:
             pg.draw.rect(screen, (150, 150, 150), self.button_rect, width=5, border_radius=1)
             desc_text = desc_font.render(self.desc, True, (150, 150, 150))
@@ -118,20 +128,39 @@ class ResearchButton(Button):
             pg.draw.rect(screen, user_color_1, self.button_rect, width=5, border_radius=1)
             desc_text = desc_font.render(self.desc, True, user_color_1)
             title_text = title_font.render(self.title, True, user_color_1)
+
         screen.blit(title_text, title_rect)
         screen.blit(desc_text, desc_rect)
-        pg.draw.line(screen,user_color_1,self.button_rect.midbottom, (self.button_rect.centerx,self.button_rect.bottom+50),4)
+
+
+        pg.draw.line(screen, user_color_1,
+                     self.button_rect.midbottom,
+                     (self.button_rect.centerx, self.button_rect.bottom + 50),
+                     4)
+
         if self.layer != 1:
-            pg.draw.line(screen,user_color_1,self.button_rect.midtop, (self.button_rect.centerx,self.button_rect.top-75),4)
+            pg.draw.line(screen, user_color_1,
+                         self.button_rect.midtop,
+                         (self.button_rect.centerx, self.button_rect.top - 75),
+                         4)
             num_in_previous = len(layers[self.layer - 1])
             if index == num_in_layer - 1:
                 if num_in_layer >= num_in_previous:
-                    pg.draw.line(screen,user_color_1,(self.button_rect.centerx,self.button_rect.top-75),(self.button_rect.centerx-(research_buttons_width-width),self.button_rect.top-75),4)
+                    pg.draw.line(screen, user_color_1,
+                                 (self.button_rect.centerx, self.button_rect.top - 75),
+                                 (self.button_rect.centerx - (research_buttons_width - width),
+                                  self.button_rect.top - 75),
+                                 4)
                 else:
-                    pg.draw.line(screen,
-                                 user_color_1,
-                                 (self.button_rect.centerx + (((width+button_spacing)/2)*(num_in_previous-(index+1))), self.button_rect.top - 75),
-                                 (self.button_rect.centerx - ((width * num_in_previous + button_spacing * (num_in_previous-(1+((num_in_previous-(index+1))*.5)))) - width * (1+((num_in_previous-(index+1))*.5))), self.button_rect.top - 75),
+                    pg.draw.line(screen, user_color_1,
+                                 (self.button_rect.centerx + (
+                                             ((width + button_spacing) / 2) * (num_in_previous - (index + 1))),
+                                  self.button_rect.top - 75),
+                                 (self.button_rect.centerx - ((width * num_in_previous + button_spacing * (
+                                             num_in_previous - (
+                                                 1 + ((num_in_previous - (index + 1)) * .5)))) - width * (
+                                                                          1 + ((num_in_previous - (index + 1)) * .5))),
+                                  self.button_rect.top - 75),
                                  4)
 
 
@@ -201,6 +230,22 @@ def color_set():
         user_color_1 = (0,0,0)
         user_color_2 = (255,255,255)
         state = 1
+
+
+def handle_research_scrolling(event):
+    global scroll_y, total_research_height
+
+
+    max_layer = max(layers.keys())
+    total_research_height = (max_layer * 300) + 400
+
+
+    if event.type == pg.MOUSEWHEEL:
+        scroll_y += event.y * scroll_speed
+
+
+        scroll_y = min(0, scroll_y)
+        scroll_y = max(-(total_research_height - screen_height + 100), scroll_y)
 
 def research_test(id):
     global civ
@@ -286,6 +331,8 @@ while running:
             button_clicked = True
         if event.type == pg.MOUSEBUTTONUP:
             button_clicked = False
+        if current_scene == 'research':
+            handle_research_scrolling(event)
     if current_scene == "home":
         for button in home_buttons:
             button.enabled = True

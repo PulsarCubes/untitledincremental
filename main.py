@@ -3,8 +3,8 @@ from math import floor
 
 #remember to use pygbag you pygfag
 
-#happiness? resources? adsdasdasdasdasdasasdasd
-#TODO adjust button sizes based on window size, scrolling guhhh
+#TODO add resources and death mechanic, limit bless with life
+#TODO adjust button sizes based on window size?
 
 pg.init()
 
@@ -108,8 +108,9 @@ class ResearchButton(Button):
         moved_y = self.layer * 300 + scroll_y
 
 
-        if moved_y + 175 < 0 or moved_y > screen_height:
+        if moved_y + 175 < 300 or moved_y > screen_height:
             self.button_rect = pg.Rect(moved_x, moved_y, width, 175)
+            return
 
         title_rect.center = (moved_x + width // 2, moved_y)
         desc_rect = desc_text.get_rect()
@@ -120,10 +121,14 @@ class ResearchButton(Button):
         self.button_rect.height = 175
         self.button_rect.centerx = moved_x + width // 2
 
-        if hover or self.used:
+        if (hover and not self.used) or not self.is_researchable():
             pg.draw.rect(screen, (150, 150, 150), self.button_rect, width=5, border_radius=1)
             desc_text = desc_font.render(self.desc, True, (150, 150, 150))
             title_text = title_font.render(self.title, True, (150, 150, 150))
+        elif self.used:
+            pg.draw.rect(screen, (34, 139, 34), self.button_rect, width=5, border_radius=1)
+            desc_text = desc_font.render(self.desc, True, (34, 139, 34))
+            title_text = title_font.render(self.title, True, ((34, 139, 34)))
         else:
             pg.draw.rect(screen, user_color_1, self.button_rect, width=5, border_radius=1)
             desc_text = desc_font.render(self.desc, True, user_color_1)
@@ -251,7 +256,13 @@ def research_test(id):
     global civ
     if id == "civ":
         civ = True
-    if id == "guh":
+    if id == "fire":
+        pass
+    if id == "stone":
+        pass
+    if id == "pot":
+        pass
+    if id == "agri":
         pass
 
 
@@ -277,7 +288,7 @@ def scholar_decrease():
 
 home_tab = TabButton("home", home)
 research_tab = TabButton("research", research)
-settings_tab = TabButton("settings", settings, )
+settings_tab = TabButton("settings", settings)
 about_tab = TabButton("about", about)
 
 spawn_button = Button("Bless with life", spawn, width=400)
@@ -290,18 +301,21 @@ scholar_decrease_button = Button("<", scholar_decrease, width=50,height=50 ,x=50
 civilization = ResearchButton(research_test, "Civilization", "The dawn of your society \n allows life and research",
                        "civ", 1)
 layer_1 = [civilization]
-testbutton2 = ResearchButton(research_test, "test of second research", "wow this is so incredibly incredible", "guh", 2,
+fire = ResearchButton(research_test, "Fire", "       Your people have discovered fire, "
+                                                    "\n   Reduces death chance through cooking", "fire", 2,
                              requirements=[civilization])
-testbutton3 = ResearchButton(research_test, "test of third research", "wow this is so incredibly incredibler", "guh", 2,
+stone_tools = ResearchButton(research_test, "Stone Tools", "Your people have invented basic tools,"
+                                                           "\n Increases food from hunting", "stone", 2,
                              requirements=[civilization])
-testbutton4 = ResearchButton(research_test, "test of fourth research", "wow this is so incredibly incredibler", "guh",
-                             2,
-                             requirements=[civilization])
-layer_2 = [testbutton2, testbutton3, testbutton4]
-testbutton5 = ResearchButton(research_test, "test of next layer", "if this doesnt break i will nut", "guh", 3,
+
+layer_2 = [fire, stone_tools]
+pottery = ResearchButton(research_test, "Pottery", "wow this is so incredibly incredibler", "pot",
+                             3,
+                             requirements=[i for i in layer_2])
+agriculture = ResearchButton(research_test, "Agriculture", "if this doesnt break i will nut", "agri", 3,
                              requirements=[i for i in layer_2])
 
-layer_3 = [testbutton5]
+layer_3 = [pottery,agriculture]
 layers = {
     1: layer_1,
     2: layer_2,
@@ -327,6 +341,7 @@ while running:
     for event in pg.event.get():
         if event.type == pg.QUIT:
             running = False
+            break
         if event.type == pg.MOUSEBUTTONDOWN:
             button_clicked = True
         if event.type == pg.MOUSEBUTTONUP:
@@ -378,10 +393,14 @@ while running:
         for list in home_buttons, research_buttons, settings_buttons:
             for button in list:
                 button.enabled = False
-        about_text = text_font.render('this really pulsars my cubes', False, user_color_1)
+        about_text = text_font.render('this really pulsars my cubes', True, user_color_1)
         about_rect = about_text.get_rect()
-        about_rect.center = (700, 700)
+        about_rect.center = (800, 700)
         screen.blit(about_text, about_rect)
+        stats_text = text_font.render(f'you have played for {seconds} {"seconds" if seconds != 1 else "second"}', True, user_color_1)
+        stats_rect = stats_text.get_rect()
+        stats_rect.center = (800, 400)
+        screen.blit(stats_text, stats_rect)
                     #button loooop
     for list in buttons_list:
         for button in list:

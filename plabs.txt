@@ -10,6 +10,9 @@ on main tab button with text "blessing of life" that creates 1 human
 each human can provide 1 research point, can work diff jobs
 people need food, housing, third thing i haven't thought of
 upgrades unlock new ways to obtain things
+houses are built with resources
+can be automated with builders
+
 
 upgrades:
 civilization - desc - 0 "points"

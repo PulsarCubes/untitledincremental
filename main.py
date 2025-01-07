@@ -15,6 +15,9 @@ state = 1
 humans = 0
 hunters = 0
 scholars = 0
+builders = 0
+#change to miners after tools/mining unlocked or something
+gatherers = 0
 unemployed = 0
 scholar_points=0
 button_font = pg.font.SysFont('Corbel', 35, True)
@@ -274,7 +277,8 @@ def hunter_increase():
 
 def hunter_decrease():
     global hunters
-    hunters -= 1
+    if hunters>0:
+        hunters -= 1
 def scholar_increase():
     global scholars
     global unemployed
@@ -283,7 +287,30 @@ def scholar_increase():
 
 def scholar_decrease():
     global scholars
-    scholars -= 1
+    if scholars > 0:
+        scholars -= 1
+
+def builder_increase():
+    global builders
+    global unemployed
+    if unemployed > 0:
+        builders += 1
+
+def builder_decrease():
+    global builders
+    if builders > 0:
+        builders -= 1
+
+def gatherer_increase():
+    global gatherers
+    global unemployed
+    if unemployed > 0:
+        gatherers += 1
+
+def gatherer_decrease():
+    global gatherers
+    if gatherers > 0:
+        gatherers -= 1
 
 
 home_tab = TabButton("home", home)
@@ -292,11 +319,14 @@ settings_tab = TabButton("settings", settings)
 about_tab = TabButton("about", about)
 
 spawn_button = Button("Bless with life", spawn, width=400)
-hunter_increase_button = Button(">", hunter_increase, width=50,height=50 ,x=350, y=300)
-hunter_decrease_button = Button("<", hunter_decrease, width=50,height=50 ,x=50, y=300)
-scholar_increase_button = Button(">", scholar_increase, width=50,height=50 ,x=350, y=400)
-scholar_decrease_button = Button("<", scholar_decrease, width=50,height=50 ,x=50, y=400)
-
+hunter_increase_button = Button(">", hunter_increase, width=50,height=50 ,x=350, y=200)
+hunter_decrease_button = Button("<", hunter_decrease, width=50,height=50 ,x=50, y=200)
+scholar_increase_button = Button(">", scholar_increase, width=50,height=50 ,x=350, y=250)
+scholar_decrease_button = Button("<", scholar_decrease, width=50,height=50 ,x=50, y=250)
+gatherer_increase_button = Button(">", gatherer_increase, width=50,height=50 ,x=350, y=300)
+gatherer_decrease_button = Button("<", gatherer_decrease, width=50,height=50 ,x=50, y=300)
+builder_increase_button = Button(">", builder_increase, width=50,height=50 ,x=350, y=350)
+builder_decrease_button = Button("<", builder_decrease, width=50,height=50 ,x=50, y=350)
 
 civilization = ResearchButton(research_test, "Civilization", "The dawn of your society \n allows life and research",
                        "civ", 1)
@@ -325,7 +355,7 @@ layers = {
 theme_button = Button("switch theme", color_set,x=800,y=200, width=250)
 
 tab_buttons = [home_tab, research_tab, settings_tab, about_tab]
-home_buttons = [spawn_button, hunter_increase_button, hunter_decrease_button,scholar_increase_button,scholar_decrease_button]
+home_buttons = [spawn_button, hunter_increase_button, hunter_decrease_button,scholar_increase_button,scholar_decrease_button,gatherer_increase_button,gatherer_decrease_button,builder_increase_button,builder_decrease_button]
 research_buttons = [button for layer in [layer_1, layer_2, layer_3] for button in layer]
 settings_buttons = [theme_button]
 buttons_list = [tab_buttons, home_buttons, research_buttons,settings_buttons]
@@ -360,12 +390,20 @@ while running:
         screen.blit(home_text, home_rect)
         hunter_text = text_font.render(f'{hunters} hunters', True, user_color_1)
         hunter_rect = hunter_text.get_rect()
-        hunter_rect.center = (200, 300)
+        hunter_rect.center = (200, 200)
         screen.blit(hunter_text, hunter_rect)
         scholar_text = text_font.render(f'{scholars} scholars', True, user_color_1)
         scholar_rect = scholar_text.get_rect()
-        scholar_rect.center = (200, 400)
+        scholar_rect.center = (200, 250)
         screen.blit(scholar_text, scholar_rect)
+        gatherer_text = text_font.render(f'{gatherers} gatherers', True, user_color_1)
+        gatherer_rect = gatherer_text.get_rect()
+        gatherer_rect.center = (200, 300)
+        screen.blit(gatherer_text, gatherer_rect)
+        builder_text = text_font.render(f'{builders} builders', True, user_color_1)
+        builder_rect = builder_text.get_rect()
+        builder_rect.center = (200, 350)
+        screen.blit(builder_text, builder_rect)
 
     if current_scene == "research":
         for list in home_buttons, settings_buttons:
@@ -455,7 +493,7 @@ while running:
     food_rect = food_text.get_rect()
     food_rect.center = (80, 100)
     screen.blit(food_text, food_rect)
-    unemployed = humans - hunters - scholars
+    unemployed = humans - hunters - scholars - gatherers - builders
     pg.display.update()
     frame += 1
     if frame == 60:

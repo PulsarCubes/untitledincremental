@@ -1,15 +1,17 @@
 import pygame as pg
 from math import floor, ceil
-from random import uniform
+from random import uniform, choice, randint
 
 #remember to use pygbag you pygfag
+#research button new attribute for req of points when able to be researched switch border but not text
 #TODO make research functional
 #TODO add label for knowledge points
 #TODO adjust button sizes based on window size?
 #TODO tutorials
 pg.init()
 
-
+workers = 0
+clicking = False
 allow_building = False
 death_factor = 3
 scroll_y = 0
@@ -88,7 +90,7 @@ class TabButton(Button):
 
 
 class ResearchButton(Button):
-    def __init__(self, func, title, desc, id, layer, enabled=True, requirements=[], used=False):
+    def __init__(self, func, title, desc, id, layer, point_req, enabled=True, requirements=[], used=False):
         super().__init__("", func, enabled)
         if requirements is None:
             requirements = []
@@ -100,6 +102,7 @@ class ResearchButton(Button):
         self.enabled = enabled
         self.used = used
         self.layer = layer
+        self.point_req = point_req
 
     def draw(self, x, y, num, hover=False):
 
@@ -110,6 +113,8 @@ class ResearchButton(Button):
         research_buttons_width = width * num_in_layer + button_spacing * (num_in_layer - 1)
         title_font = pg.font.SysFont('Corbel', 50, True)
         desc_font = pg.font.SysFont('Corbel', 30)
+        smol_font = pg.font.SysFont('Corbel', 40, bold=True)
+
         desc_text = desc_font.render(self.desc, True, user_color_1)
         title_text = title_font.render(self.title, True, user_color_1)
         title_rect = title_text.get_rect()
@@ -130,23 +135,27 @@ class ResearchButton(Button):
         self.button_rect.inflate_ip(width - self.button_rect.width, 20)
         self.button_rect.height = 175
         self.button_rect.centerx = moved_x + width // 2
-
-        if (hover and not self.used) or not self.is_researchable():
+        req_text = smol_font.render(str(self.point_req), True, (150, 150, 150))
+        req_rect = req_text.get_rect()
+        req_rect.topleft = (self.button_rect.left + 10, self.button_rect.top + 10)
+        if (hover and not self.used) or not self.is_researchable(): #unused or unresearchable
             pg.draw.rect(screen, (150, 150, 150), self.button_rect, width=5, border_radius=1)
             desc_text = desc_font.render(self.desc, True, (150, 150, 150))
             title_text = title_font.render(self.title, True, (150, 150, 150))
-        elif self.used:
+            req_text = smol_font.render(str(self.point_req), True, (150, 150, 150))
+        elif self.used: #used
             pg.draw.rect(screen, (34, 139, 34), self.button_rect, width=5, border_radius=1)
             desc_text = desc_font.render(self.desc, True, (34, 139, 34))
             title_text = title_font.render(self.title, True, ((34, 139, 34)))
-        else:
-            pg.draw.rect(screen, user_color_1, self.button_rect, width=5, border_radius=1)
+            req_text = smol_font.render(str(self.point_req), True, (34, 139, 34))
+        else:  #able to be used
+            pg.draw.rect(screen, (255, 236, 161), self.button_rect, width=5, border_radius=1)
             desc_text = desc_font.render(self.desc, True, user_color_1)
             title_text = title_font.render(self.title, True, user_color_1)
-
+            req_text = smol_font.render(str(self.point_req), True, (user_color_1))
         screen.blit(title_text, title_rect)
         screen.blit(desc_text, desc_rect)
-
+        screen.blit(req_text, req_rect)
         pg.draw.line(screen, user_color_1,
                      self.button_rect.midbottom,
                      (self.button_rect.centerx, self.button_rect.bottom + 50),
@@ -178,7 +187,7 @@ class ResearchButton(Button):
                                  4)
 
     def is_researchable(self):
-        return all([req.used for req in self.requirements])
+        return (all([req.used for req in self.requirements]) and self.point_req <= knowledge) or self.used
 
 
 def home_scene():
@@ -251,10 +260,23 @@ def work():
 
 
 def death():
-    global humans
-    global death_factor
+    global humans, death_factor
+    global workers, hunters, scholars, gatherers, builders
 
+    work_list = [workers, hunters, scholars, gatherers]
     humans -= (ceil((uniform(humans / 100, humans / 50) * death_factor)))
+
+    if humans < workers:
+        for i in range(workers - humans):
+            dead = randint(0, 3)
+            while work_list[dead] == 0:
+                dead = randint(0, 3)
+            work_list[dead] -= 1
+
+            workers = work_list[0]
+            hunters = work_list[1]
+            scholars = work_list[2]
+            gatherers = work_list[3]
 
 
 def color_set():
@@ -286,6 +308,7 @@ def handle_research_scrolling(event):
 
 def research(id):
     global civ
+    global knowledge
     if id == "civ":
         civ = True
     if id == "fire":
@@ -293,11 +316,15 @@ def research(id):
     if id == "stone":
         global allow_building
         allow_building = True
+        if not stone_tools.used:
+            knowledge -= stone_tools.point_req
     if id == "pot":
         pass
     if id == "agri":
         global passive_food
-        passive_food += 1
+        passive_food = 1
+        if not stone_tools.used:
+            knowledge -= agriculture.point_req
 
 
 def hunter_increase():
@@ -359,31 +386,31 @@ about_tab = TabButton("about", about_scene)
 
 spawn_button = Button("Bless with life", spawn, width=400)
 build_button = Button("Build a House (10 resources)", build_house, width=450, y=screen_height // 2 + 100)
-hunter_increase_button = Button(">", hunter_increase, width=50, height=50, x=screen_width//2+150, y=225)
-hunter_decrease_button = Button("<", hunter_decrease, width=50, height=50, x=screen_width//2-150, y=225)
-scholar_increase_button = Button(">", scholar_increase, width=50, height=50, x=screen_width//2+150, y=275)
-scholar_decrease_button = Button("<", scholar_decrease, width=50, height=50, x=screen_width//2-150, y=275)
-gatherer_increase_button = Button(">", gatherer_increase, width=50, height=50, x=screen_width//2+150, y=325)
-gatherer_decrease_button = Button("<", gatherer_decrease, width=50, height=50, x=screen_width//2-150, y=325)
-builder_increase_button = Button(">", builder_increase, width=50, height=50, x=screen_width//2+150, y=375)
-builder_decrease_button = Button("<", builder_decrease, width=50, height=50, x=screen_width//2-150, y=375)
+hunter_increase_button = Button(">", hunter_increase, width=50, height=50, x=screen_width // 2 + 150, y=225)
+hunter_decrease_button = Button("<", hunter_decrease, width=50, height=50, x=screen_width // 2 - 150, y=225)
+scholar_increase_button = Button(">", scholar_increase, width=50, height=50, x=screen_width // 2 + 150, y=275)
+scholar_decrease_button = Button("<", scholar_decrease, width=50, height=50, x=screen_width // 2 - 150, y=275)
+gatherer_increase_button = Button(">", gatherer_increase, width=50, height=50, x=screen_width // 2 + 150, y=325)
+gatherer_decrease_button = Button("<", gatherer_decrease, width=50, height=50, x=screen_width // 2 - 150, y=325)
+builder_increase_button = Button(">", builder_increase, width=50, height=50, x=screen_width // 2 + 150, y=375)
+builder_decrease_button = Button("<", builder_decrease, width=50, height=50, x=screen_width // 2 - 150, y=375)
 
 civilization = ResearchButton(research, "Civilization", "The dawn of your society \n allows life and research",
-                              "civ", 1)
+                              "civ", 1, 0)
 layer_1 = [civilization]
 fire = ResearchButton(research, "Fire", "       Your people discover fire, "
-                                             "\n Reduces death chance through cooking", "fire", 2,
+                                        "\n Reduces death chance through cooking", "fire", 2, 50,
                       requirements=[civilization])
 stone_tools = ResearchButton(research, "Stone Tools", "Your people invent basic tools,"
-                                                           "\n Allows home building", "stone", 2,
+                                                      "\n Allows home building", "stone", 2, 50,
                              requirements=[civilization])
 
 layer_2 = [fire, stone_tools]
 pottery = ResearchButton(research, "Pottery", "wow this is so incredibly incredibler", "pot",
-                         3,
+                         3, 200,
                          requirements=[i for i in layer_2])
 agriculture = ResearchButton(research, "Agriculture", "Your people invent basic agriculture \n "
-                                                           "Allows passive food growth", "agri", 3,
+                                                      "Allows passive food growth", "agri", 3, 250,
                              requirements=[i for i in layer_2])
 
 layer_3 = [pottery, agriculture]
@@ -433,19 +460,19 @@ while running:
         screen.blit(home_text, home_rect)
         hunter_text = text_font.render(f'{hunters} hunters', True, user_color_1)
         hunter_rect = hunter_text.get_rect()
-        hunter_rect.center = (screen_width//2, 225)
+        hunter_rect.center = (screen_width // 2, 225)
         screen.blit(hunter_text, hunter_rect)
         scholar_text = text_font.render(f'{scholars} scholars', True, user_color_1)
         scholar_rect = scholar_text.get_rect()
-        scholar_rect.center = (screen_width//2, 275)
+        scholar_rect.center = (screen_width // 2, 275)
         screen.blit(scholar_text, scholar_rect)
         gatherer_text = text_font.render(f'{gatherers} gatherers', True, user_color_1)
         gatherer_rect = gatherer_text.get_rect()
-        gatherer_rect.center = (screen_width//2, 325)
+        gatherer_rect.center = (screen_width // 2, 325)
         screen.blit(gatherer_text, gatherer_rect)
         builder_text = text_font.render(f'{builders} builders', True, user_color_1)
         builder_rect = builder_text.get_rect()
-        builder_rect.center = (screen_width//2, 375)
+        builder_rect.center = (screen_width // 2, 375)
         screen.blit(builder_text, builder_rect)
 
     if current_scene == "research":
@@ -529,6 +556,7 @@ while running:
                             if button_clicked:
                                 button.func()
                                 button_clicked = False
+
     humans_text = text_font.render(f'{humans} {"people" if humans != 1 else "person"}', True, user_color_1)
     humans_rect = humans_text.get_rect()
     humans_rect.center = (100, 50)
@@ -554,11 +582,11 @@ while running:
     houses_rect.center = (100, 250)
     screen.blit(houses_text, houses_rect)
 
-
-
-    unemployed = humans - hunters - scholars - gatherers - builders
+    workers = hunters + scholars + gatherers + builders
+    unemployed = humans - unemployed
     pg.display.update()
     frame += 1
+
     if frame == 60:
         breed()
         food += passive_food
@@ -568,7 +596,7 @@ while running:
             eat()
             if food == 0:
                 humans -= ceil(humans / 10)
-        if seconds % 30 == 0:
+        if seconds % 3 == 0:
             death()
         work()
         frame = 0

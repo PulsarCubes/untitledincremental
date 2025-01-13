@@ -1,15 +1,18 @@
 import pygame as pg
 from math import floor, ceil
-from random import uniform, choice, randint
+from random import uniform, randint
 
 #remember to use pygbag you pygfag
-#research button new attribute for req of points when able to be researched switch border but not text
-#TODO make research functional
+#TODO add more research + age labels
 #TODO add label for knowledge points
 #TODO adjust button sizes based on window size?
 #TODO tutorials
+#TODO flavor text for research
 pg.init()
 
+
+food_storage = 20
+storage_scale = 1
 workers = 0
 clicking = False
 allow_building = False
@@ -222,9 +225,12 @@ def spawn():
 def build_house():
     global resources
     global houses
+    global food_storage
     if resources >= 10:
         houses += 1
+        food_storage += 10 * storage_scale
         resources -= 10
+
 
 
 def breed():
@@ -253,7 +259,9 @@ def work():
     global food
     global knowledge
     global seconds
-    food += hunters
+    global food_storage
+    if food < food_storage:
+        food += hunters
     knowledge += scholars
     if seconds % 2 == 0:
         resources += gatherers
@@ -312,14 +320,18 @@ def research(id):
     if id == "civ":
         civ = True
     if id == "fire":
-        pass
+        global death_factor
+        death_factor = 2
     if id == "stone":
         global allow_building
         allow_building = True
         if not stone_tools.used:
             knowledge -= stone_tools.point_req
     if id == "pot":
-        pass
+        global food_storage
+        global storage_scale
+        food_storage = 100
+        storage_scale = 2
     if id == "agri":
         global passive_food
         passive_food = 1
@@ -394,21 +406,26 @@ gatherer_increase_button = Button(">", gatherer_increase, width=50, height=50, x
 gatherer_decrease_button = Button("<", gatherer_decrease, width=50, height=50, x=screen_width // 2 - 150, y=325)
 builder_increase_button = Button(">", builder_increase, width=50, height=50, x=screen_width // 2 + 150, y=375)
 builder_decrease_button = Button("<", builder_decrease, width=50, height=50, x=screen_width // 2 - 150, y=375)
-
+#the power of friendship
 civilization = ResearchButton(research, "Civilization", "The dawn of your society \n allows life and research",
                               "civ", 1, 0)
 layer_1 = [civilization]
+#fire emoji
 fire = ResearchButton(research, "Fire", "       Your people discover fire, "
                                         "\n Reduces death chance through cooking", "fire", 2, 50,
                       requirements=[civilization])
+#getting stoned
 stone_tools = ResearchButton(research, "Stone Tools", "Your people invent basic tools,"
                                                       "\n Allows home building", "stone", 2, 50,
                              requirements=[civilization])
 
 layer_2 = [fire, stone_tools]
-pottery = ResearchButton(research, "Pottery", "wow this is so incredibly incredibler", "pot",
+#the less cool kind of pot
+pottery = ResearchButton(research, "Pottery", "Your people discover pottery, "
+                         "\n Increases food storage by 100, scales storage ", "pot",
                          3, 200,
                          requirements=[i for i in layer_2])
+#the more cool kind of pot
 agriculture = ResearchButton(research, "Agriculture", "Your people invent basic agriculture \n "
                                                       "Allows passive food growth", "agri", 3, 250,
                              requirements=[i for i in layer_2])
@@ -585,6 +602,8 @@ while running:
     workers = hunters + scholars + gatherers + builders
     unemployed = humans - unemployed
     pg.display.update()
+    if food > food_storage:
+        food = food_storage
     frame += 1
 
     if frame == 60:

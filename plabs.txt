@@ -13,9 +13,59 @@ upgrades unlock new ways to obtain things
 houses are built with resources
 can be automated with builders
 
-
+consider adding electricity/electricity generation
+computing based thing?
+this is more stuff for future updates
 upgrades:
-civilization - desc - 0 "points"
+rename agriculture to cultivation
+civilization - desc - 0 "points" l1
+fire l2
+stone tools l2
+pottery l3
+cultivation l3
+writing l3
+metallurgy l4
+education l4
+agriculture l5
+iron l5
+butchery l5
+mathmatics l6
+fertilizer l6
+smithing l6
+chemistry l7
+steel l7
+medicine l8
+gunpowder l8
+colonies l9
+steam power l9
+hygiene l10
+industrialization l10
+manufacturing l11
+electricity l11
+material science l11
+cities l12
+antibiotics l12
+processed foods l13
+semiconductors l13
+space travel l14
+genetic research l14
+GMOs l15
+the internet l15
+renewables l15
+fusion power l16
+advanced robotics l16 #why should WE do the hard jobs
+quantum computing l16
+food engineering l17 #who doesn't like pink paste
+nanotubes l17
+AI l17 #like the sentient kind
+artificial organs l18
+wetware computing l18 #it watches you
+dyson sphere
+faster than light travel l19
+space colonization l19
+entropy reversal l19
+singularity l20 #prestige upgrade??
+
 
 
 coding:

@@ -10,7 +10,7 @@ from random import uniform, randint
 #TODO flavor text for research
 pg.init()
 
-
+research_gain = 1
 food_storage = 20
 storage_scale = 1
 workers = 0
@@ -260,9 +260,10 @@ def work():
     global knowledge
     global seconds
     global food_storage
+    global research_gain
     if food < food_storage:
         food += hunters
-    knowledge += scholars
+    knowledge += scholars * research_gain
     if seconds % 2 == 0:
         resources += gatherers
 
@@ -317,26 +318,36 @@ def handle_research_scrolling(event):
 def research(id):
     global civ
     global knowledge
-    if id == "civ" or civ_button.used: #add or used for when theres eventual browser persistence data
+    if id == "civ" or civilization.used: #add or used for when theres eventual browser persistence data
         civ = True
-    if id == "fire":
+    if id == "fire" or fire.used:
         global death_factor
         death_factor = 2
-    if id == "stone":
+        if not fire.used:
+            knowledge -= fire.point_req
+    if id == "stone" or stone_tools.used:
         global allow_building
         allow_building = True
         if not stone_tools.used:
             knowledge -= stone_tools.point_req
-    if id == "pot":
+    if id == "pot" or pottery.used:
         global food_storage
         global storage_scale
         food_storage = 100
         storage_scale = 2
-    if id == "agri":
+        if not pottery.used:
+            knowledge -= pottery.point_req
+    if id == "culti" or cultivation.used:
         global passive_food
         passive_food = 1
-        if not stone_tools.used:
-            knowledge -= agriculture.point_req
+        if not cultivation.used:
+            knowledge -= cultivation.point_req
+    if id == "writing" or writing.used:
+        global research_gain
+        research_gain = 2
+    if id == "metal":
+        pass
+        #change label of gatherers to miners
 
 
 def hunter_increase():
@@ -426,15 +437,25 @@ pottery = ResearchButton(research, "Pottery", "Your people discover pottery, "
                          3, 200,
                          requirements=[i for i in layer_2])
 #the more cool kind of pot
-agriculture = ResearchButton(research, "Agriculture", "Your people invent basic agriculture \n "
-                                                      "Allows passive food growth", "agri", 3, 250,
+cultivation = ResearchButton(research, "cultivation", "Your people invent basic crop cultivation \n "
+                                                      "Allows passive food growth", "culti", 3, 250,
+                             requirements=[stone_tools])
+
+writing = ResearchButton(research, "writing", "Your people develop a writing system \n "
+                                                      "increases scholar gain", "writing", 3, 250,
                              requirements=[i for i in layer_2])
 
-layer_3 = [pottery, agriculture]
+layer_3 = [pottery, cultivation, writing]
+#mining mini game like terragenesis
+metallurgy = ResearchButton(research, "metallurgy", "Your people learn to smelt metals \n "
+                                                      "increases resource gain, unlocks mining", "metal", 4, 1000,
+                             requirements=[i for i in layer_3])
+layer_4=[metallurgy]
 layers = {
     1: layer_1,
     2: layer_2,
-    3: layer_3
+    3: layer_3,
+    4: layer_4
 }
 
 theme_button = Button("switch theme", color_set, x=800, y=200, width=250)
@@ -443,7 +464,8 @@ tab_buttons = [home_tab, research_tab, settings_tab, about_tab]
 home_buttons = [spawn_button, build_button, hunter_increase_button, hunter_decrease_button, scholar_increase_button,
                 scholar_decrease_button, gatherer_increase_button, gatherer_decrease_button, builder_increase_button,
                 builder_decrease_button]
-research_buttons = [button for layer in [layer_1, layer_2, layer_3] for button in layer]
+#simplify generator to go over dict
+research_buttons = [button for layer in [layer_1, layer_2, layer_3,layer_4] for button in layer]
 settings_buttons = [theme_button]
 buttons_list = [tab_buttons, home_buttons, research_buttons, settings_buttons]
 
@@ -541,31 +563,14 @@ while running:
                     tab_button += 1
                 if civ or button is civilization or button in settings_buttons:
                     if isinstance(button, ResearchButton):
-                        if button.layer == 1:
-                            button.draw(400, 400, 0)
-                            if pg.Rect.collidepoint(button.button_rect, mouse_x, mouse_y):
-                                button.draw(400, 400, 0, True)
-                                if button_clicked:
-                                    if button.is_researchable():
-                                        button.func(button.id)
-                                        button.used = True
-                        elif button.layer == 2:
-                            button.draw(400, 400, layer_2.index(button))
-                            if pg.Rect.collidepoint(button.button_rect, mouse_x, mouse_y):
-                                button.draw(400, 400, layer_2.index(button), True)
-                                if button_clicked:
-                                    if button.is_researchable():
-                                        button.func(button.id)
-                                        button.used = True
-                        elif button.layer == 3:
-                            button.draw(400, 400, layer_3.index(button))
-                            if pg.Rect.collidepoint(button.button_rect, mouse_x, mouse_y):
-                                button.draw(400, 400, layer_3.index(button), True)
-                                if button_clicked:
-                                    if button.is_researchable():
-                                        button.func(button.id)
-                                        button.used = True
 
+                        button.draw(400, 400, layers[button.layer].index(button))
+                        if pg.Rect.collidepoint(button.button_rect, mouse_x, mouse_y):
+                            button.draw(400, 400, layers[button.layer].index(button),True)
+                            if button_clicked:
+                                if button.is_researchable():
+                                    button.func(button.id)
+                                    button.used = True
                     else:
                         button.draw(screen_width / 2, screen_height / 2)
                         if pg.Rect.collidepoint(button.button_rect, mouse_x, mouse_y):

@@ -317,7 +317,7 @@ def handle_research_scrolling(event):
 def research(id):
     global civ
     global knowledge
-    if id == "civ" or civ_button.used:
+    if id == "civ" or civ_button.used: #add or used for when theres eventual browser persistence data
         civ = True
     if id == "fire":
         global death_factor

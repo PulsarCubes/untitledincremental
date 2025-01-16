@@ -45,6 +45,7 @@ electricity l11
 material science l11
 cities l12
 antibiotics l12
+plastics l12
 processed foods l13
 semiconductors l13
 space travel l14
@@ -66,6 +67,10 @@ space colonization l19
 entropy reversal l19
 singularity l20 #prestige upgrade??
 
+
+deferred to next version:
+age labels
+minigames
 
 
 coding:

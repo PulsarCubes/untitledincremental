@@ -3,9 +3,9 @@ from math import floor, ceil
 from random import uniform, randint
 
 #remember to use pygbag you pygfag
-#TODO add more research + age labels
-#TODO add label for knowledge points
+#TODO age labels (v1.1)
 #TODO adjust button sizes based on window size?
+#TODO think of minigames (v1.1)
 #TODO tutorials
 #TODO flavor text for research
 pg.init()
@@ -141,12 +141,12 @@ class ResearchButton(Button):
         req_text = smol_font.render(str(self.point_req), True, (150, 150, 150))
         req_rect = req_text.get_rect()
         req_rect.topleft = (self.button_rect.left + 10, self.button_rect.top + 10)
-        if (hover and not self.used) or not self.is_researchable(): #unused or unresearchable
+        if (hover and not self.used) or not self.is_researchable():  #unused or unresearchable
             pg.draw.rect(screen, (150, 150, 150), self.button_rect, width=5, border_radius=1)
             desc_text = desc_font.render(self.desc, True, (150, 150, 150))
             title_text = title_font.render(self.title, True, (150, 150, 150))
             req_text = smol_font.render(str(self.point_req), True, (150, 150, 150))
-        elif self.used: #used
+        elif self.used:  #used
             pg.draw.rect(screen, (34, 139, 34), self.button_rect, width=5, border_radius=1)
             desc_text = desc_font.render(self.desc, True, (34, 139, 34))
             title_text = title_font.render(self.title, True, ((34, 139, 34)))
@@ -219,7 +219,8 @@ def spawn():
         if humans < 5:
             humans += 1
     else:
-        humans += 1
+        if humans <= 5*(houses+1):
+            humans += 1
 
 
 def build_house():
@@ -230,7 +231,6 @@ def build_house():
         houses += 1
         food_storage += 10 * storage_scale
         resources -= 10
-
 
 
 def breed():
@@ -263,7 +263,7 @@ def work():
     global research_gain
     if food < food_storage:
         food += hunters
-    knowledge += scholars * research_gain
+    knowledge += ceil(scholars * research_gain)
     if seconds % 2 == 0:
         resources += gatherers
 
@@ -318,7 +318,8 @@ def handle_research_scrolling(event):
 def research(id):
     global civ
     global knowledge
-    if id == "civ" or civilization.used: #add or used for when theres eventual browser persistence data
+    #TODO this entire thing
+    if id == "civ" or civilization.used:
         civ = True
     if id == "fire" or fire.used:
         global death_factor
@@ -344,11 +345,19 @@ def research(id):
             knowledge -= cultivation.point_req
     if id == "writing" or writing.used:
         global research_gain
-        research_gain = 2
-    if id == "metal":
+        research_gain = 1.5
+    if id == "metal" or metallurgy.used:
         pass
         #change label of gatherers to miners
-
+    if id == "edu" or education.used:
+        global research_gain
+        research_gain = 2
+    if id == "iron" or iron.used:
+        pass
+    if id == "butch" or butchery.used:
+        pass
+    if id == "agri" or agriculture.used:
+        pass
 
 def hunter_increase():
     global hunters
@@ -433,7 +442,7 @@ stone_tools = ResearchButton(research, "Stone Tools", "Your people invent basic 
 layer_2 = [fire, stone_tools]
 #the less cool kind of pot
 pottery = ResearchButton(research, "Pottery", "Your people discover pottery, "
-                         "\n Increases food storage by 100, scales storage ", "pot",
+                                              "\n Increases food storage by 100, scales storage ", "pot",
                          3, 200,
                          requirements=[i for i in layer_2])
 #the more cool kind of pot
@@ -441,21 +450,36 @@ cultivation = ResearchButton(research, "cultivation", "Your people invent basic 
                                                       "Allows passive food growth", "culti", 3, 250,
                              requirements=[stone_tools])
 
-writing = ResearchButton(research, "writing", "Your people develop a writing system \n "
-                                                      "increases scholar gain", "writing", 3, 250,
-                             requirements=[i for i in layer_2])
+writing = ResearchButton(research, "Writing", "Your people develop a writing system \n "
+                                              "increases scholar gain", "writing", 3, 250,
+                         requirements=[i for i in layer_2])
 
 layer_3 = [pottery, cultivation, writing]
-#mining mini game like terragenesis
-metallurgy = ResearchButton(research, "metallurgy", "Your people learn to smelt metals \n "
-                                                      "increases resource gain, unlocks mining", "metal", 4, 1000,
-                             requirements=[i for i in layer_3])
-layer_4=[metallurgy]
+
+metallurgy = ResearchButton(research, "Metallurgy", "Your people learn to smelt metals \n "
+                                                    "increases resource gain, unlocks mining", "metal", 4, 1000,
+                            requirements=[i for i in layer_3])
+education = ResearchButton(research, "Education", "Education becomes more commonplace \n "
+                                                    "further increases scholar gain", "edu", 4, 1500,
+                            requirements=[writing])
+layer_4 = [metallurgy,education]
+agriculture = ResearchButton(research, "Education", "Develop advanced agriculture \n "
+                                                    "increased passive food growth", "agri", 5, 3000,
+                            requirements=[education,cultivation])
+butchery = ResearchButton(research, "Butchery", "More efficient meat slicing \n "
+                                                    "hunters produce more food", "butch", 5, 2500,
+                            requirements=[i for i in layer_4])
+iron = ResearchButton(research, "Education", "Your people learn to smelt metals \n "
+                                                    "further increases scholar gain", "iron", 5, 4000,
+                            requirements=[metallurgy])
+layer_5 = [butchery,iron,agriculture]
+
 layers = {
     1: layer_1,
     2: layer_2,
     3: layer_3,
-    4: layer_4
+    4: layer_4,
+    5: layer_5
 }
 
 theme_button = Button("switch theme", color_set, x=800, y=200, width=250)
@@ -464,8 +488,7 @@ tab_buttons = [home_tab, research_tab, settings_tab, about_tab]
 home_buttons = [spawn_button, build_button, hunter_increase_button, hunter_decrease_button, scholar_increase_button,
                 scholar_decrease_button, gatherer_increase_button, gatherer_decrease_button, builder_increase_button,
                 builder_decrease_button]
-#simplify generator to go over dict
-research_buttons = [button for layer in [layer_1, layer_2, layer_3,layer_4] for button in layer]
+research_buttons = [button for layer in layers.values() for button in layer]
 settings_buttons = [theme_button]
 buttons_list = [tab_buttons, home_buttons, research_buttons, settings_buttons]
 
@@ -566,7 +589,7 @@ while running:
 
                         button.draw(400, 400, layers[button.layer].index(button))
                         if pg.Rect.collidepoint(button.button_rect, mouse_x, mouse_y):
-                            button.draw(400, 400, layers[button.layer].index(button),True)
+                            button.draw(400, 400, layers[button.layer].index(button), True)
                             if button_clicked:
                                 if button.is_researchable():
                                     button.func(button.id)

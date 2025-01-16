@@ -8,6 +8,7 @@ from random import uniform, randint
 #TODO think of minigames (v1.1)
 #TODO tutorials
 #TODO flavor text for research
+#TODO reset button in settings
 pg.init()
 
 research_gain = 1

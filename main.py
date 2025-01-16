@@ -506,13 +506,31 @@ smithing = ResearchButton(research, "Smithing", "Form metal into better shapes \
                                                     "increase storage, hunting, resource gain", "smith", 6, 6000,
                             requirements=[iron])
 layer_6 = [mathematics,fertilizer,smithing]
+
+chemistry = ResearchButton(research, "Chemistry", "Basic chemistry \n "
+                                                    "increases scholarly gain", "smith", 7, 6000,
+                            requirements=[i for i in layer_6])
+layer_7 = [chemistry]
+#TODO actually do this
+steel = ResearchButton(research, "Steel", "Make your iron stronger \n "
+                                                    "increase storage, hunting, resource gain", "smith", 8, 6000,
+                            requirements=[chemistry,smithing,iron])
+medicine = ResearchButton(research, "Steel", "Make your iron stronger \n "
+                                                    "increase storage, hunting, resource gain", "smith", 8, 6000,
+                            requirements=[chemistry,smithing,iron])
+gunpowder = ResearchButton(research, "Steel", "Make your iron stronger \n "
+                                                    "increase storage, hunting, resource gain", "smith", 8, 6000,
+                            requirements=[chemistry,smithing,iron])
+
 layers = {
     1: layer_1,
     2: layer_2,
     3: layer_3,
     4: layer_4,
     5: layer_5,
-    6: layer_6
+    6: layer_6,
+    7: layer_7
+
 }
 
 theme_button = Button("switch theme", color_set, x=800, y=200, width=250)

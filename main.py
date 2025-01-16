@@ -8,7 +8,6 @@ from random import uniform, randint
 #TODO think of minigames (v1.1)
 #TODO tutorials
 #TODO flavor text for research
-#TODO reset button in settings
 pg.init()
 
 research_gain = 1
@@ -193,6 +192,19 @@ class ResearchButton(Button):
     def is_researchable(self):
         return (all([req.used for req in self.requirements]) and self.point_req <= knowledge) or self.used
 
+def reset():
+    global humans, food_storage, food, resources, houses, research_gain, knowledge, civ, death_factor, storage_scale, passive_food, hunters,gatherers,builders,scholars
+    civ = False
+    humans, resources, houses, knowledge, passive_food, hunters, gatherers, builders, scholars = (0,0,0,0,0,0,0,0,0)
+    food = 10
+    research_gain = 1
+    food_storage = 20
+    death_factor = 3
+    storage_scale = 1
+
+    for layer in layers.values():
+        for button in layer:
+            button.used = False
 
 def home_scene():
     global current_scene
@@ -317,8 +329,7 @@ def handle_research_scrolling(event):
 
 
 def research(id):
-    global civ
-    global knowledge
+    global civ,knowledge,research_gain
     #TODO this entire thing
     if id == "civ" or civilization.used:
         civ = True
@@ -345,19 +356,23 @@ def research(id):
         if not cultivation.used:
             knowledge -= cultivation.point_req
     if id == "writing" or writing.used:
-        global research_gain
         research_gain = 1.5
     if id == "metal" or metallurgy.used:
         pass
         #change label of gatherers to miners
     if id == "edu" or education.used:
-        global research_gain
         research_gain = 2
     if id == "iron" or iron.used:
         pass
     if id == "butch" or butchery.used:
         pass
     if id == "agri" or agriculture.used:
+        pass
+    if id == "smith" or smithing.used:
+        pass
+    if id == "math" or mathematics.used:
+        pass
+    if id == "fert" or fertilizer.used:
         pass
 
 def hunter_increase():
@@ -460,6 +475,7 @@ layer_3 = [pottery, cultivation, writing]
 metallurgy = ResearchButton(research, "Metallurgy", "Your people learn to smelt metals \n "
                                                     "increases resource gain, unlocks mining", "metal", 4, 1000,
                             requirements=[i for i in layer_3])
+
 education = ResearchButton(research, "Education", "Education becomes more commonplace \n "
                                                     "further increases scholar gain", "edu", 4, 1500,
                             requirements=[writing])
@@ -467,30 +483,47 @@ layer_4 = [metallurgy,education]
 agriculture = ResearchButton(research, "Education", "Develop advanced agriculture \n "
                                                     "increased passive food growth", "agri", 5, 3000,
                             requirements=[education,cultivation])
+
 butchery = ResearchButton(research, "Butchery", "More efficient meat slicing \n "
                                                     "hunters produce more food", "butch", 5, 2500,
                             requirements=[i for i in layer_4])
-iron = ResearchButton(research, "Education", "Your people learn to smelt metals \n "
-                                                    "further increases scholar gain", "iron", 5, 4000,
+
+iron = ResearchButton(research, "iron", "Your people learn to use iron \n "
+                                                    "even more efficient mining and hunting", "iron", 5, 4000,
                             requirements=[metallurgy])
+
 layer_5 = [butchery,iron,agriculture]
 
+mathematics = ResearchButton(research, "Mathematics", "Your people invent a math system \n "
+                                                    "further increases scholar gain", "math", 6, 8000,
+                            requirements=[i for i in layer_5])
+
+fertilizer = ResearchButton(research, "Fertilizer", "Your people learn to fertilize fields \n "
+                                                    "more passive food", "fert", 6, 4500,
+                            requirements=[agriculture, butchery])
+
+smithing = ResearchButton(research, "Smithing", "Form metal into better shapes \n "
+                                                    "increase storage, hunting, resource gain", "smith", 6, 6000,
+                            requirements=[iron])
+layer_6 = [mathematics,fertilizer,smithing]
 layers = {
     1: layer_1,
     2: layer_2,
     3: layer_3,
     4: layer_4,
-    5: layer_5
+    5: layer_5,
+    6: layer_6
 }
 
 theme_button = Button("switch theme", color_set, x=800, y=200, width=250)
+reset_button = Button("reset game", reset, x=800, y=400, width=250)
 
 tab_buttons = [home_tab, research_tab, settings_tab, about_tab]
 home_buttons = [spawn_button, build_button, hunter_increase_button, hunter_decrease_button, scholar_increase_button,
                 scholar_decrease_button, gatherer_increase_button, gatherer_decrease_button, builder_increase_button,
                 builder_decrease_button]
 research_buttons = [button for layer in layers.values() for button in layer]
-settings_buttons = [theme_button]
+settings_buttons = [theme_button,reset_button]
 buttons_list = [tab_buttons, home_buttons, research_buttons, settings_buttons]
 
 home_scene()
@@ -559,6 +592,7 @@ while running:
         settings_rect = settings_text.get_rect()
         settings_rect.center = (500, 500)
         screen.blit(settings_text, settings_rect)
+
 
     elif current_scene == "about":
         for list in home_buttons, research_buttons, settings_buttons:
@@ -644,7 +678,7 @@ while running:
             eat()
             if food == 0:
                 humans -= ceil(humans / 10)
-        if seconds % 3 == 0:
+        if seconds % 30 == 0:
             death()
         work()
         frame = 0

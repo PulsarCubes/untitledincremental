@@ -146,12 +146,12 @@ class ResearchButton(Button):
             desc_text = desc_font.render(self.desc, True, (150, 150, 150))
             title_text = title_font.render(self.title, True, (150, 150, 150))
             req_text = smol_font.render(str(self.point_req), True, (150, 150, 150))
-        elif self.used:  #used
+        elif self.used:
             pg.draw.rect(screen, (34, 139, 34), self.button_rect, width=5, border_radius=1)
             desc_text = desc_font.render(self.desc, True, (34, 139, 34))
             title_text = title_font.render(self.title, True, ((34, 139, 34)))
             req_text = smol_font.render(str(self.point_req), True, (34, 139, 34))
-        else:  #able to be used
+        else:
             pg.draw.rect(screen, (255, 236, 161), self.button_rect, width=5, border_radius=1)
             desc_text = desc_font.render(self.desc, True, user_color_1)
             title_text = title_font.render(self.title, True, user_color_1)
@@ -374,6 +374,22 @@ def research(id):
         pass
     if id == "fert" or fertilizer.used:
         pass
+    if id == "chem" or chemistry.used:
+        pass
+    if id == "steel" or steel.used:
+        pass
+    if id == "meds" or medicine.used:
+        pass
+    if id == "boom" or gunpowder.used:
+        pass
+    if id == "steam" or steam.used:
+        pass
+    if id == "colon" or colonies.used:
+        pass
+    if id == "indus" or industry.used:
+        pass
+    if id == "clean" or hygiene.used:
+        pass
 
 def hunter_increase():
     global hunters
@@ -508,20 +524,40 @@ smithing = ResearchButton(research, "Smithing", "Form metal into better shapes \
 layer_6 = [mathematics,fertilizer,smithing]
 
 chemistry = ResearchButton(research, "Chemistry", "Basic chemistry \n "
-                                                    "increases scholarly gain", "smith", 7, 6000,
+                                                    "increases scholarly gain", "chem", 7, 6000,
                             requirements=[i for i in layer_6])
 layer_7 = [chemistry]
 #TODO actually do this
 steel = ResearchButton(research, "Steel", "Make your iron stronger \n "
-                                                    "increase storage, hunting, resource gain", "smith", 8, 6000,
-                            requirements=[chemistry,smithing,iron])
-medicine = ResearchButton(research, "Steel", "Make your iron stronger \n "
-                                                    "increase storage, hunting, resource gain", "smith", 8, 6000,
-                            requirements=[chemistry,smithing,iron])
-gunpowder = ResearchButton(research, "Steel", "Make your iron stronger \n "
-                                                    "increase storage, hunting, resource gain", "smith", 8, 6000,
-                            requirements=[chemistry,smithing,iron])
+                                                    "increase resource gain", "steel", 8, 10000,
+                            requirements=[chemistry,smithing ])
+medicine = ResearchButton(research, "Medicine", "Unlock basic medicine \n "
+                                                    "reduce death", "meds", 8, 7500,
+                            requirements=[chemistry])
+#we bring the boom
+gunpowder = ResearchButton(research, "Gunpowder", "Invent some explosives \n "
+                                                    "mooore resource gain from mining", "boom", 8, 12000,
+                            requirements=[chemistry, smithing])
+layer_8 = [gunpowder,medicine,steel]
 
+colonies = ResearchButton(research, "Colonies", "Start colonizing the empty land \n "
+                                                    "increases potential houses", "colon", 9, 15000,
+                            requirements=[chemistry, smithing])
+#is this an idle game now
+steam = ResearchButton(research, "Steam Power", "Make the water work for you \n "
+                                                    "allows passive resource gain", "steam", 9, 15000,
+                            requirements=[steel, gunpowder])
+layer_9 = [colonies,steam]
+
+hygiene = ResearchButton(research, "Hygiene", "Your people can clean themselves \n "
+                                                    "further reduces death", "clean", 10, 20000,
+                            requirements=[steam, medicine])
+
+industry = ResearchButton(research, "Industrialization", "Make your iron stronger \n "
+                                                    "increases passive resource gain", "indus", 10, 20000,
+                            requirements=[steam])
+
+layer_10 = [hygiene,industry]
 layers = {
     1: layer_1,
     2: layer_2,
@@ -529,8 +565,10 @@ layers = {
     4: layer_4,
     5: layer_5,
     6: layer_6,
-    7: layer_7
-
+    7: layer_7,
+    8: layer_8,
+    9: layer_9,
+    10: layer_10
 }
 
 theme_button = Button("switch theme", color_set, x=800, y=200, width=250)

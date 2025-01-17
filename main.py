@@ -93,7 +93,7 @@ class TabButton(Button):
 
 
 class ResearchButton(Button):
-    def __init__(self, func, title, desc, id, layer, point_req, enabled=True, requirements=[], used=False):
+    def __init__(self, func, title, desc, id, layer, point_req, enabled=True, requirements=[], used=False, flavor_text = ""):
         super().__init__("", func, enabled)
         if requirements is None:
             requirements = []
@@ -106,6 +106,7 @@ class ResearchButton(Button):
         self.used = used
         self.layer = layer
         self.point_req = point_req
+        self.flavor_text = flavor_text
 
     def draw(self, x, y, num, hover=False):
 

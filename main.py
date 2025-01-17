@@ -7,7 +7,7 @@ from random import uniform, randint
 #TODO adjust button sizes based on window size?
 #TODO think of minigames (v1.1)
 #TODO tutorials
-#TODO flavor text for research
+#TODO add flavor texts for research
 pg.init()
 
 research_gain = 1
@@ -142,7 +142,12 @@ class ResearchButton(Button):
         req_text = smol_font.render(str(self.point_req), True, (150, 150, 150))
         req_rect = req_text.get_rect()
         req_rect.topleft = (self.button_rect.left + 10, self.button_rect.top + 10)
-        if (hover and not self.used) or not self.is_researchable():  #unused or unresearchable
+        flavor_text = desc_font.render(self.flavor_text, True, (150, 150, 150))
+        flavor_rect = flavor_text.get_rect()
+        flavor_rect.top = desc_rect.bottom + 20
+        flavor_rect.centerx = desc_rect.centerx
+
+        if (hover and not self.used) or not self.is_researchable():
             pg.draw.rect(screen, (150, 150, 150), self.button_rect, width=5, border_radius=1)
             desc_text = desc_font.render(self.desc, True, (150, 150, 150))
             title_text = title_font.render(self.title, True, (150, 150, 150))
@@ -160,6 +165,7 @@ class ResearchButton(Button):
         screen.blit(title_text, title_rect)
         screen.blit(desc_text, desc_rect)
         screen.blit(req_text, req_rect)
+        screen.blit(flavor_text, flavor_rect)
         pg.draw.line(screen, user_color_1,
                      self.button_rect.midbottom,
                      (self.button_rect.centerx, self.button_rect.bottom + 50),
@@ -461,7 +467,7 @@ builder_increase_button = Button(">", builder_increase, width=50, height=50, x=s
 builder_decrease_button = Button("<", builder_decrease, width=50, height=50, x=screen_width // 2 - 150, y=375)
 #the power of friendship
 civilization = ResearchButton(research, "Civilization", "The dawn of your society \n allows life and research",
-                              "civ", 1, 0)
+                              "civ", 1, 0, flavor_text="the power of friendship")
 layer_1 = [civilization]
 #fire emoji
 fire = ResearchButton(research, "Fire", "       Your people discover fire, "

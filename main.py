@@ -7,7 +7,7 @@ from random import uniform, randint
 #TODO adjust button sizes based on window size?
 #TODO think of minigames (v1.1)
 #TODO tutorials
-#TODO points totals abbreviate
+#TODO cross session saving
 #TODO add flavor texts for research
 pg.init()
 
@@ -372,87 +372,140 @@ def research(id):
         if not cultivation.used:
             knowledge -= cultivation.point_req
     if id == "writing" or writing.used:
-        research_gain = 1.5
+
+        if not writing.used:
+            research_gain *= 2
+            knowledge -= writing.point_req
     if id == "metal" or metallurgy.used:
         gather_scale = 2
+        if not metallurgy.used:
+            knowledge -= metallurgy.point_req
     if id == "edu" or education.used:
-        research_gain = 2
+        if not education.used:
+            knowledge -= education.point_req
+            research_gain *= 2
     if id == "iron" or iron.used:
         gather_scale = 3
         hunt_scale = 2
+        if not iron.used:
+            knowledge -= iron.point_req
     if id == "butch" or butchery.used:
-        hunt_scale = 2
+        hunt_scale = 3
+        if not butchery.used:
+            knowledge -= butchery.point_req
     if id == "agri" or agriculture.used:
-        pass
+        passive_food = 3
+        if not agriculture.used:
+            knowledge -= agriculture.point_req
     if id == "smith" or smithing.used:
-        pass
+        #storage hunting resources
+        if not smithing.used:
+            storage_scale *= 2
+            food_storage = 200
+            hunt_scale = 4
+            gather_scale = 4
+            knowledge -= smithing.point_req
     if id == "math" or mathematics.used:
-        pass
+        if not mathematics.used:
+            knowledge -= mathematics.point_req
     if id == "fert" or fertilizer.used:
-        pass
+        if not fertilizer.used:
+            knowledge -= fertilizer.point_req
     if id == "chem" or chemistry.used:
-        pass
+        if not chemistry.used:
+            research_gain *= 2
+            knowledge -= chemistry.point_req
     if id == "steel" or steel.used:
-        pass
+        if not steel.used:
+            knowledge -= steel.point_req
     if id == "meds" or medicine.used:
-        pass
+        if not medicine.used:
+            knowledge -= medicine.point_req
     if id == "boom" or gunpowder.used:
-        pass
+        if not gunpowder.used:
+            knowledge -= gunpowder.point_req
     if id == "steam" or steam.used:
-        pass
+        if not steam.used:
+            knowledge -= steam.point_req
     if id == "colon" or colonies.used:
-        pass
+        if not colonies.used:
+            knowledge -= colonies.point_req
     if id == "indus" or industry.used:
-        pass
+        if not industry.used:
+            knowledge -= industry.point_req
     if id == "clean" or hygiene.used:
-        pass
+        if not hygiene.used:
+            knowledge -= hygiene.point_req
     if id == "elec" or electricity.used:
-        pass
+        if not electricity.used:
+            knowledge -= electricity.point_req
     if id == "mats" or materials.used:
-        pass
+        if not materials.used:
+            knowledge -= materials.point_req
     if id == "city" or cities.used:
-        pass
+        if not cities.used:
+            knowledge -= cities.point_req
     if id == "poly" or plastics.used:
-        pass
+        if not plastics.used:
+            knowledge -= plastics.point_req
     if id == "anti" or antibiotics.used:
-        pass
+        if not antibiotics.used:
+            knowledge -= antibiotics.point_req
     if id == "food" or processed.used:
-        pass
+        if not processed.used:
+            knowledge -= processed.point_req
     if id == "semi" or semiconductors.used:
-        pass
+        if not semiconductors.used:
+            knowledge -= semiconductors.point_req
     if id == "space" or SPACE.used:
-        pass
+        if not SPACE.used:
+            knowledge -= SPACE.point_req
     if id == "gene" or genetics.used:
-        pass
+        if not genetics.used:
+            knowledge -= genetics.point_req
     if id == "GMO" or GMOs.used:
-        pass
+        if not GMOs.used:
+            knowledge -= GMOs.point_req
     if id == "int" or internet.used:
-        pass
+        if not internet.used:
+            knowledge -= internet.point_req
     if id == "fuse" or fusion.used:
-        pass
+        if not fusion.used:
+            knowledge -= fusion.point_req
     if id == "robo" or robots.used:
-        pass
+        if not robots.used:
+            knowledge -= robots.point_req
     if id == "quan" or quantum.used:
-        pass
+        if not quantum.used:
+            knowledge -= quantum.point_req
     if id == "pink" or food_eng.used:
-        pass
+        if not food_eng.used:
+            knowledge -= food_eng.point_req
     if id == "AI" or AI.used:
-        pass
+        if not AI.used:
+            knowledge -= AI.point_req
     if id == "nano" or nanotubes.used:
-        pass
+        if not nanotubes.used:
+            knowledge -= nanotubes.point_req
     if id == "organ" or organs.used:
-        pass
+        if not organs.used:
+            knowledge -= organs.point_req
     if id == "wet" or wetware.used:
-        pass
+        if not wetware.used:
+            knowledge -= wetware.point_req
     if id == "space" or space_colony.used:
-        pass
+        if not space_colony.used:
+            knowledge -= space_colony.point_req
     if id == "ftl" or ftl.used:
-        pass
+        if not ftl.used:
+            knowledge -= ftl.point_req
     if id == "entr" or entropy.used:
-        pass
+        if not entropy.used:
+            knowledge -= entropy.point_req
     #set humans to 1, end game
     if id == "sing" or singularity.used:
-        pass
+        if not singularity.used:
+            knowledge -= singularity.point_req
 def hunter_increase():
     global hunters
     global unemployed
@@ -522,7 +575,7 @@ builder_increase_button = Button(">", builder_increase, width=50, height=50, x=s
 builder_decrease_button = Button("<", builder_decrease, width=50, height=50, x=screen_width // 2 - 150, y=375)
 
 civilization = ResearchButton(research, "Civilization", "The dawn of your society \n allows life and research",
-                              "civ", 1, 0, flavor_text="the power of friendship")
+                              "civ", 1, 0, flavor_text="we live in a society")
 layer_1 = [civilization]
 fire = ResearchButton(research, "Fire", "       Your people discover fire, "
                                         "\n Reduces death chance through cooking", "fire", 2, 50,
@@ -553,10 +606,10 @@ metallurgy = ResearchButton(research, "Metallurgy", "Your people learn to smelt 
                             requirements=[i for i in layer_3])
 
 education = ResearchButton(research, "Education", "Education becomes more commonplace \n "
-                                                  "further increases scholar gain", "edu", 4, 1500,
+                                                  "further increases scholar gain", "edu", 4, 1500, flavor_text="big brain",
                            requirements=[writing])
 layer_4 = [metallurgy, education]
-agriculture = ResearchButton(research, "Education", "Develop advanced agriculture \n "
+agriculture = ResearchButton(research, "Agriculture", "Develop advanced agriculture \n "
                                                     "increased passive food growth", "agri", 5, 3000,
                              requirements=[education, cultivation])
 
@@ -592,7 +645,7 @@ steel = ResearchButton(research, "Steel", "Make your iron stronger \n "
                                           "increase resource gain", "steel", 8, 10000,
                        requirements=[chemistry, smithing])
 medicine = ResearchButton(research, "Medicine", "Unlock basic medicine \n "
-                                                "reduce death", "meds", 8, 7500,
+                                                "reduce death", "meds", 8, 7500,flavor_text="we need the medicine drug",
                           requirements=[chemistry])
 gunpowder = ResearchButton(research, "Gunpowder", "Invent some explosives \n "
                                                   "mooore resource gain from mining", "boom", 8, 12000,
@@ -611,7 +664,7 @@ steam = ResearchButton(research, "Steam Power", "Make the water work for you \n 
 layer_9 = [colonies, steam]
 
 hygiene = ResearchButton(research, "Hygiene", "Your people can clean themselves \n "
-                                              "further reduces death", "clean", 10, 20000,
+                                              "further reduces death", "clean", 10, 20000,flavor_text="no more pheromones",
                          requirements=[steam, medicine])
 
 industry = ResearchButton(research, "Industrialization", "Start industrializing \n "
@@ -621,7 +674,7 @@ industry = ResearchButton(research, "Industrialization", "Start industrializing 
 layer_10 = [hygiene, industry]
 
 electricity = ResearchButton(research, "Electricity", "Start producing and using electricity \n "
-                                                      "increase passive resources AGAIN", "elec", 11, 25000,
+                                                      "increase passive resources AGAIN", "elec", 11, 25000,flavor_text="shocking",
                              requirements=[industry])
 materials = ResearchButton(research, "Material Science", "Start developing better materials \n "
                                                          "reduces house price", "mats", 11, 25000,
@@ -862,22 +915,22 @@ while running:
                                 button.func()
                                 button_clicked = False
 
-    humans_text = text_font.render(f'{humans} {"people" if humans != 1 else "person"}', True, user_color_1)
+    humans_text = text_font.render(f'{shrink_num(humans)} {"people" if humans != 1 else "person"}', True, user_color_1)
     humans_rect = humans_text.get_rect()
     humans_rect.center = (100, 50)
     screen.blit(humans_text, humans_rect)
 
-    food_text = text_font.render(f'{food} food', True, user_color_1)
+    food_text = text_font.render(f'{shrink_num(food)} food', True, user_color_1)
     food_rect = food_text.get_rect()
     food_rect.center = (80, 100)
     screen.blit(food_text, food_rect)
 
-    knowledge_text = text_font.render(f'{knowledge} knowledge', True, user_color_1)
+    knowledge_text = text_font.render(f'{shrink_num(knowledge)} knowledge', True, user_color_1)
     knowledge_rect = knowledge_text.get_rect()
     knowledge_rect.center = (130, 150)
     screen.blit(knowledge_text, knowledge_rect)
 
-    resources_text = text_font.render(f'{resources} resources', True, user_color_1)
+    resources_text = text_font.render(f'{shrink_num(resources)} resources', True, user_color_1)
     resources_rect = resources_text.get_rect()
     resources_rect.center = (120, 200)
     screen.blit(resources_text, resources_rect)

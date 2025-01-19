@@ -14,10 +14,12 @@ pg.init()
 research_gain = 1
 food_storage = 20
 storage_scale = 1
+hunt_scale = 1
+gather_scale = 1
 workers = 0
 clicking = False
 allow_building = False
-death_factor = 3
+death_scale = 3
 scroll_y = 0
 scroll_speed = 50
 passive_food = 0
@@ -94,7 +96,7 @@ class TabButton(Button):
 
 
 class ResearchButton(Button):
-    def __init__(self, func, title, desc, id, layer, point_req, enabled=True, requirements=[], used=False,
+    def __init__(self, func, title, desc, id, layer, point_req, enabled=True, requirements=None, used=False,
                  flavor_text=""):
         super().__init__("", func, enabled)
         if requirements is None:
@@ -146,32 +148,33 @@ class ResearchButton(Button):
         req_rect.topleft = (self.button_rect.left + 10, self.button_rect.top + 10)
         flavor_text = desc_font.render(self.flavor_text, True, (150, 150, 150))
         flavor_rect = flavor_text.get_rect()
-        flavor_rect.top = desc_rect.bottom
+        flavor_rect.top = desc_rect.bottom + 30
         flavor_rect.centerx = desc_rect.centerx
 
         if (hover and not self.used) or not self.is_researchable():
             pg.draw.rect(screen, (150, 150, 150), self.button_rect, width=5, border_radius=1)
             desc_text = desc_font.render(self.desc, True, (150, 150, 150))
             title_text = title_font.render(self.title, True, (150, 150, 150))
-            req_text = smol_font.render(str(self.point_req), True, (150, 150, 150))
+            req_text = smol_font.render(shrink_num(self.point_req), True, (150, 150, 150))
         elif self.used:
             pg.draw.rect(screen, (34, 139, 34), self.button_rect, width=5, border_radius=1)
             desc_text = desc_font.render(self.desc, True, (34, 139, 34))
-            title_text = title_font.render(self.title, True, ((34, 139, 34)))
-            req_text = smol_font.render(str(self.point_req), True, (34, 139, 34))
+            title_text = title_font.render(self.title, True, (34, 139, 34))
+            req_text = smol_font.render(shrink_num(self.point_req), True, (34, 139, 34))
         else:
             pg.draw.rect(screen, (255, 236, 161), self.button_rect, width=5, border_radius=1)
             desc_text = desc_font.render(self.desc, True, user_color_1)
             title_text = title_font.render(self.title, True, user_color_1)
-            req_text = smol_font.render(str(self.point_req), True, (user_color_1))
+            req_text = smol_font.render(shrink_num(self.point_req), True, user_color_1)
         screen.blit(title_text, title_rect)
         screen.blit(desc_text, desc_rect)
         screen.blit(req_text, req_rect)
         screen.blit(flavor_text, flavor_rect)
-        pg.draw.line(screen, user_color_1,
-                     self.button_rect.midbottom,
-                     (self.button_rect.centerx, self.button_rect.bottom + 50),
-                     4)
+        if self.layer != 20:
+            pg.draw.line(screen, user_color_1,
+                         self.button_rect.midbottom,
+                         (self.button_rect.centerx, self.button_rect.bottom + 50),
+                         4)
 
         if self.layer != 1:
             pg.draw.line(screen, user_color_1,
@@ -203,14 +206,14 @@ class ResearchButton(Button):
 
 
 def reset():
-    global humans, food_storage, food, resources, houses, research_gain, knowledge, civ, death_factor, storage_scale, passive_food, hunters, gatherers, builders, scholars
+    global humans, food_storage, food, resources, houses, research_gain, knowledge, civ, death_scale, storage_scale, passive_food, hunters, gatherers, builders, scholars
     civ = False
     humans, resources, houses, knowledge, passive_food, hunters, gatherers, builders, scholars = (
         0, 0, 0, 0, 0, 0, 0, 0, 0)
     food = 10
     research_gain = 1
     food_storage = 20
-    death_factor = 3
+    death_scale = 3
     storage_scale = 1
 
     for layer in layers.values():
@@ -277,15 +280,7 @@ def eat():
 
 
 def work():
-    global hunters
-    global scholars
-    global gatherers
-    global resources
-    global food
-    global knowledge
-    global seconds
-    global food_storage
-    global research_gain
+    global hunters, scholars, gatherers, resources, food, knowledge, seconds, food_storage, research_gain, builders, hunt_scale, gather_scale
     if food < food_storage:
         food += hunters
     knowledge += ceil(scholars * research_gain)
@@ -294,11 +289,11 @@ def work():
 
 
 def death():
-    global humans, death_factor
+    global humans, death_scale
     global workers, hunters, scholars, gatherers, builders
 
     work_list = [workers, hunters, scholars, gatherers]
-    humans -= (ceil((uniform(humans / 100, humans / 50) * death_factor)))
+    humans -= (ceil((uniform(humans / 100, humans / 50) * death_scale)))
 
     if humans < workers:
         for i in range(workers - humans):
@@ -326,7 +321,20 @@ def color_set():
         user_color_2 = (255, 255, 255)
         theme_state = 1
 
+def shrink_num(num):
+    if num < 1000:
+        return str(num)
+    if 1000 <= num < 1000000:
+        return str(num/1000)+"K"
+    if num >= 1000000:
+        return str(num/1000)+"M"
 
+def shrink_time(secs):
+    if 3600 > secs:
+        return f"{secs // 60} {'minutes' if secs // 60 != 1 else 'minute' } and {secs % 60} {'seconds' if secs % 60 != 1 else 'second' }"
+
+    if secs >= 3600:
+        return f"{secs // 3600} {'hours' if secs // 3600 != 1 else 'hour' }, {(secs % 3600) // 60} {'minutes' if (secs % 3600) // 60 != 1 else 'minute' }, and {(secs % 3600) % 60} {'seconds' if ((secs % 3600) % 60) != 1 else 'second' }"
 def handle_research_scrolling(event):
     global scroll_y, total_research_height
 
@@ -341,13 +349,12 @@ def handle_research_scrolling(event):
 
 
 def research(id):
-    global civ, knowledge, research_gain
+    global civ, knowledge, research_gain, death_scale, food_storage, storage_scale, passive_food, hunt_scale, gather_scale
     #TODO this entire thing
     if id == "civ" or civilization.used:
         civ = True
     if id == "fire" or fire.used:
-        global death_factor
-        death_factor = 2
+        death_scale = 2
         if not fire.used:
             knowledge -= fire.point_req
     if id == "stone" or stone_tools.used:
@@ -356,28 +363,25 @@ def research(id):
         if not stone_tools.used:
             knowledge -= stone_tools.point_req
     if id == "pot" or pottery.used:
-        global food_storage
-        global storage_scale
         food_storage = 100
         storage_scale = 2
         if not pottery.used:
             knowledge -= pottery.point_req
     if id == "culti" or cultivation.used:
-        global passive_food
         passive_food = 1
         if not cultivation.used:
             knowledge -= cultivation.point_req
     if id == "writing" or writing.used:
         research_gain = 1.5
     if id == "metal" or metallurgy.used:
-        pass
-        #change label of gatherers to miners
+        gather_scale = 2
     if id == "edu" or education.used:
         research_gain = 2
     if id == "iron" or iron.used:
-        pass
+        gather_scale = 3
+        hunt_scale = 2
     if id == "butch" or butchery.used:
-        pass
+        hunt_scale = 2
     if id == "agri" or agriculture.used:
         pass
     if id == "smith" or smithing.used:
@@ -783,7 +787,7 @@ while running:
         scholar_rect = scholar_text.get_rect()
         scholar_rect.center = (screen_width // 2, 275)
         screen.blit(scholar_text, scholar_rect)
-        gatherer_text = text_font.render(f'{gatherers} gatherers', True, user_color_1)
+        gatherer_text = text_font.render(f'{gatherers} {" gatherers" if not metallurgy.used else " miners"}', True, user_color_1)
         gatherer_rect = gatherer_text.get_rect()
         gatherer_rect.center = (screen_width // 2, 325)
         screen.blit(gatherer_text, gatherer_rect)
@@ -823,7 +827,7 @@ while running:
         about_rect = about_text.get_rect()
         about_rect.center = (800, 700)
         screen.blit(about_text, about_rect)
-        stats_text = text_font.render(f'you have played for {seconds} {"seconds" if seconds != 1 else "second"}', True,
+        stats_text = text_font.render(f'you have played for {shrink_time(seconds)}', True,
                                       user_color_1)
         stats_rect = stats_text.get_rect()
         stats_rect.center = (800, 400)

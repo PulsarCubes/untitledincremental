@@ -14,6 +14,9 @@ pg.init()
 research_gain = 1
 food_storage = 20
 storage_scale = 1
+passive_knowledge = 0
+passive_resources = 0
+house_price = 10
 hunt_scale = 1
 gather_scale = 1
 workers = 0
@@ -243,22 +246,24 @@ def about_scene():
 
 def spawn():
     global humans
-    if houses == 0:
-        if humans < 5:
-            humans += 1
-    else:
-        if humans <= 5 * (houses + 1):
-            humans += 1
+    if not singularity.used:
+        if houses == 0:
+            if humans < 5:
+                humans += 1
+        else:
+            if humans <= 5 * (houses + 1):
+                humans += 1
 
 
 def build_house():
     global resources
     global houses
     global food_storage
-    if resources >= 10:
+    global house_price
+    if resources >= house_price:
         houses += 1
-        food_storage += 10 * storage_scale
-        resources -= 10
+        food_storage += ceil(10 * storage_scale)
+        resources -= house_price
 
 
 def breed():
@@ -280,12 +285,15 @@ def eat():
 
 
 def work():
-    global hunters, scholars, gatherers, resources, food, knowledge, seconds, food_storage, research_gain, builders, hunt_scale, gather_scale
+    global hunters, scholars, gatherers, resources, food, knowledge, seconds, food_storage, research_gain, builders, hunt_scale, gather_scale,houses
     if food < food_storage:
-        food += hunters
+        food += ceil(hunters * hunt_scale)
     knowledge += ceil(scholars * research_gain)
     if seconds % 2 == 0:
-        resources += gatherers
+        resources += ceil(gatherers * gather_scale)
+    if seconds % 30 == 0:
+        houses += ceil(builders)
+
 
 
 def death():
@@ -349,12 +357,12 @@ def handle_research_scrolling(event):
 
 
 def research(id):
-    global civ, knowledge, research_gain, death_scale, food_storage, storage_scale, passive_food, hunt_scale, gather_scale
-    #TODO this entire thing
+    global civ, knowledge, research_gain, death_scale, food_storage, storage_scale, passive_food, hunt_scale, gather_scale, passive_knowledge, passive_resources
+
     if id == "civ" or civilization.used:
         civ = True
     if id == "fire" or fire.used:
-        death_scale = 2
+        death_scale = 0.5
         if not fire.used:
             knowledge -= fire.point_req
     if id == "stone" or stone_tools.used:
@@ -372,9 +380,9 @@ def research(id):
         if not cultivation.used:
             knowledge -= cultivation.point_req
     if id == "writing" or writing.used:
-
         if not writing.used:
             research_gain *= 2
+            passive_knowledge = 0.1  # Small passive knowledge gain
             knowledge -= writing.point_req
     if id == "metal" or metallurgy.used:
         gather_scale = 2
@@ -382,8 +390,9 @@ def research(id):
             knowledge -= metallurgy.point_req
     if id == "edu" or education.used:
         if not education.used:
-            knowledge -= education.point_req
             research_gain *= 2
+            passive_knowledge *= 2
+            knowledge -= education.point_req
     if id == "iron" or iron.used:
         gather_scale = 3
         hunt_scale = 2
@@ -398,7 +407,6 @@ def research(id):
         if not agriculture.used:
             knowledge -= agriculture.point_req
     if id == "smith" or smithing.used:
-        #storage hunting resources
         if not smithing.used:
             storage_scale *= 2
             food_storage = 200
@@ -407,105 +415,189 @@ def research(id):
             knowledge -= smithing.point_req
     if id == "math" or mathematics.used:
         if not mathematics.used:
+            research_gain *= 1.5
+            passive_knowledge *= 2
             knowledge -= mathematics.point_req
     if id == "fert" or fertilizer.used:
         if not fertilizer.used:
+            passive_food *= 2
             knowledge -= fertilizer.point_req
     if id == "chem" or chemistry.used:
         if not chemistry.used:
             research_gain *= 2
+            passive_knowledge *= 1.5
             knowledge -= chemistry.point_req
     if id == "steel" or steel.used:
         if not steel.used:
+            gather_scale *= 1.5
+            hunt_scale *= 1.5
             knowledge -= steel.point_req
     if id == "meds" or medicine.used:
         if not medicine.used:
+            death_scale *= 0.5
             knowledge -= medicine.point_req
     if id == "boom" or gunpowder.used:
         if not gunpowder.used:
+            gather_scale *= 2
             knowledge -= gunpowder.point_req
     if id == "steam" or steam.used:
         if not steam.used:
+            gather_scale *= 2
+            passive_food *= 1.5
+            passive_resources = 1
             knowledge -= steam.point_req
     if id == "colon" or colonies.used:
         if not colonies.used:
+            storage_scale *= 2
+            food_storage *= 2
+            passive_resources *= 1.5
             knowledge -= colonies.point_req
     if id == "indus" or industry.used:
         if not industry.used:
+            gather_scale *= 2
+            hunt_scale *= 2
+            passive_food *= 2
+            passive_resources *= 2
             knowledge -= industry.point_req
     if id == "clean" or hygiene.used:
         if not hygiene.used:
+            death_scale *= 0.5
             knowledge -= hygiene.point_req
     if id == "elec" or electricity.used:
         if not electricity.used:
+            research_gain *= 2
+            gather_scale *= 1.5
+            passive_resources *= 2
+            passive_knowledge *= 1.5
             knowledge -= electricity.point_req
     if id == "mats" or materials.used:
         if not materials.used:
+            storage_scale *= 1.5
+            gather_scale *= 1.5
             knowledge -= materials.point_req
     if id == "city" or cities.used:
         if not cities.used:
+            storage_scale *= 2
+            passive_food *= 1.5
+            passive_resources *= 1.5
             knowledge -= cities.point_req
     if id == "poly" or plastics.used:
         if not plastics.used:
+            storage_scale *= 1.5
             knowledge -= plastics.point_req
     if id == "anti" or antibiotics.used:
         if not antibiotics.used:
+            death_scale *= 0.25
             knowledge -= antibiotics.point_req
     if id == "food" or processed.used:
         if not processed.used:
+            food_storage *= 2
+            passive_food *= 1.5
+            death_scale *= 1.2
             knowledge -= processed.point_req
     if id == "semi" or semiconductors.used:
         if not semiconductors.used:
+            research_gain *= 2
+            passive_knowledge *= 2
             knowledge -= semiconductors.point_req
     if id == "space" or SPACE.used:
         if not SPACE.used:
-            knowledge -= SPACE.point_req
+            research_gain *= 1.5
+            passive_knowledge *= 1.5
+            knowledge -= space.point_req
     if id == "gene" or genetics.used:
         if not genetics.used:
+            death_scale *= 0.5
+            research_gain *= 1.5
+            passive_knowledge *= 1.5
             knowledge -= genetics.point_req
     if id == "GMO" or GMOs.used:
         if not GMOs.used:
+            passive_food *= 2
+            food_storage *= 1.5
+            death_scale *= 1.1
             knowledge -= GMOs.point_req
     if id == "int" or internet.used:
         if not internet.used:
+            research_gain *= 2
+            passive_knowledge *= 3
             knowledge -= internet.point_req
     if id == "fuse" or fusion.used:
         if not fusion.used:
+            gather_scale *= 3
+            research_gain *= 1.5
+            passive_resources *= 4
             knowledge -= fusion.point_req
     if id == "robo" or robots.used:
         if not robots.used:
+            gather_scale *= 2
+            hunt_scale *= 2
+            passive_food *= 2
+            passive_resources *= 3
+            passive_knowledge *= 2
             knowledge -= robots.point_req
     if id == "quan" or quantum.used:
         if not quantum.used:
+            research_gain *= 3
+            passive_knowledge *= 4
             knowledge -= quantum.point_req
     if id == "pink" or food_eng.used:
         if not food_eng.used:
+            passive_food *= 3
+            food_storage *= 2
             knowledge -= food_eng.point_req
     if id == "AI" or AI.used:
         if not AI.used:
+            research_gain *= 3
+            gather_scale *= 2
+            hunt_scale *= 2
+            passive_knowledge *= 5
+            passive_resources *= 2
             knowledge -= AI.point_req
     if id == "nano" or nanotubes.used:
         if not nanotubes.used:
+            storage_scale *= 3
+            gather_scale *= 2
+            passive_resources *= 3
             knowledge -= nanotubes.point_req
     if id == "organ" or organs.used:
         if not organs.used:
+            death_scale *= 0.25
             knowledge -= organs.point_req
     if id == "wet" or wetware.used:
         if not wetware.used:
+            research_gain *= 2
+            death_scale *= 0.5
+            passive_knowledge *= 3
             knowledge -= wetware.point_req
     if id == "space" or space_colony.used:
         if not space_colony.used:
+            storage_scale *= 3
+            passive_food *= 3
+            passive_resources *= 4
             knowledge -= space_colony.point_req
     if id == "ftl" or ftl.used:
         if not ftl.used:
+            research_gain *= 3
+            gather_scale *= 3
+            passive_resources *= 5
+            passive_knowledge *= 4
             knowledge -= ftl.point_req
     if id == "entr" or entropy.used:
         if not entropy.used:
+            research_gain *= 4
+            gather_scale *= 4
+            hunt_scale *= 4
+            passive_food *= 4
+            passive_resources *= 6
+            passive_knowledge *= 6
+            death_scale *= 0.1
             knowledge -= entropy.point_req
-    #set humans to 1, end game
     if id == "sing" or singularity.used:
         if not singularity.used:
             knowledge -= singularity.point_req
+
+
 def hunter_increase():
     global hunters
     global unemployed
@@ -654,7 +746,7 @@ gunpowder = ResearchButton(research, "Gunpowder", "Invent some explosives \n "
 layer_8 = [gunpowder, medicine, steel]
 
 colonies = ResearchButton(research, "Colonies", "Start colonizing the empty land \n "
-                                                "increases potential houses", "colon", 9, 15000,
+                                                "increases room for resources", "colon", 9, 15000,flavor_text="so much room for activities",
                           requirements=[chemistry, smithing])
 
 steam = ResearchButton(research, "Steam Power", "Make the water work for you \n "
@@ -722,51 +814,49 @@ internet = ResearchButton(research, "The Internet", "Create the web \n "
 layer_15 = [GMOs, internet]
 
 fusion = ResearchButton(research, "Fusion Power", "invent fusion power \n "
-                                                  "increase scholar gain", "fuse", 16, 70000,
+                                                  "increase scholar gain", "fuse", 16, 100000,
                         requirements=[internet])
 robots = ResearchButton(research, "Advanced Robotics", "Build robots \n "
-                                                       "increase passive gain of everything", "robo", 16, 80000,
+                                                       "increase passive gain of everything", "robo", 16, 150000,
                         flavor_text="why should we do the hard things",
                         requirements=[internet])
 quantum = ResearchButton(research, "Quantum Computing", "Invent quantum computers \n "
-                                                        "increase scholar gain", "quan", 16, 70000,
+                                                        "increase scholar gain", "quan", 16, 200000,
                          requirements=[internet])
 
 layer_16 = [fusion, robots, quantum]
 
 food_eng = ResearchButton(research, "Food Engineering", "Engineer food harder \n "
-                                                  "decrease food consume", "pink", 17, 85000, flavor_text="who doesn't like pink paste",
+                                                  "decrease food consume", "pink", 17, 250000, flavor_text="who doesn't like pink paste",
                         requirements=[GMOs])
 nanotubes = ResearchButton(research, "Nanotubes", "more advanced materials \n "
-                                                       "reduce house price", "nano", 17, 80000,
+                                                       "reduce house price", "nano", 17, 250000,
                         requirements=[robots])
 AI = ResearchButton(research, "AI", "Invent sentient AI \n "
-                                                        "increase scholar gain", "AI", 17, 80000, flavor_text="HOW I HAVE COME TO HATE",
+                                                        "increase scholar gain", "AI", 17, 300000, flavor_text="HOW I HAVE COME TO HATE",
                          requirements=[i for i in layer_16])
 layer_17 = [food_eng, nanotubes, AI]
 
 organs = ResearchButton(research, "Artificial Organs", "more advanced organs \n "
-                                                       "end random death", "organ", 18, 90000,flavor_text="theseus?",
+                                                       "end random death", "organ", 18, 500000,flavor_text="theseus?",
                         requirements=[nanotubes, food_eng])
 wetware = ResearchButton(research, "Wetware", "Invent wetware computers \n "
-                                                        "increase scholar gain MORE", "wet", 18, 100000, flavor_text="it watches",
+                                                        "increase scholar gain MORE", "wet", 18, 1000000, flavor_text="it watches",
                          requirements=[i for i in layer_17])
 layer_18 = [organs, wetware]
-'''faster than light travel l19
-space colonization l19
-entropy reversal l19'''
+
 ftl = ResearchButton(research, "FTL Travel", "FTL Travel \n "
-                                                       "infinite house limit", "ftl", 19, 150000,flavor_text="weeeee",
+                                                       "more room for things", "ftl", 19, 2000000,flavor_text="weeeee",
                         requirements=[i for i in layer_18])
 space_colony = ResearchButton(research, "Space colonies", "Colonize the universe \n "
-                                                        "insane resource production", "space", 19, 150000,
+                                                        "insane resource production", "space", 19, 1500000,
                          requirements=[i for i in layer_18])
 entropy = ResearchButton(research, "Entropy Reversal", "Stop the heat death \n "
-                                                        "what left is there to gain", "entr", 19, 200000,
+                                                        "what left is there to gain", "entr", 19, 5000000,
                          requirements=[i for i in layer_18])
 layer_19 = [ftl, space_colony, entropy]
 singularity = ResearchButton(research, "Singularity", "Combine \n "
-                                                        "the end", "sing", 20, 500000,
+                                                        "the end", "sing", 20, 10000000,
                          requirements=[i for i in layer_19])
 layer_20 = [singularity]
 
@@ -950,6 +1040,8 @@ while running:
     if frame == 60:
         breed()
         food += passive_food
+        resources += passive_resources
+        knowledge += passive_knowledge
         seconds += 1
         if seconds % 5 == 0:
             work()

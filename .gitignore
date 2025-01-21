@@ -2,3 +2,4 @@ __pycache__/
 .idea/
 main.py~
 qodana.yaml
+build

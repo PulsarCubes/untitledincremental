@@ -233,65 +233,6 @@ class ResearchButton(Button):
         return (all([req.used for req in self.requirements]) and self.point_req <= knowledge) or self.used
 
 
-def tutorial():
-    global tab_image
-    global running
-    global button_clicked
-    global prompt
-    global prompts
-    global screen_width, screen_height
-    prompt = 0
-    forward_button = Button("Next", next, x=screen_width // 2 + 200, y=screen_height // 2 + 300)
-    back_button = Button("Back", back, x=screen_width // 2 - 200, y=screen_height // 2 + 300)
-    skip_button = Button("Skip", skip, x=screen_width // 2, y=screen_height // 2 + 300)
-    buttons = [forward_button, back_button, skip_button]
-    screen_width, screen_height = screen.get_size()
-    while running:
-        screen.fill(user_color_2)
-        if prompt == 2:
-            image_rect = tab_image.get_rect()
-            image_rect.center = (screen_width // 2, screen_height // 2 + 100)
-            screen.blit(tab_image, image_rect)
-        if prompt == 3:
-            image_rect = home_image.get_rect()
-            image_rect.center = (screen_width // 2, screen_height // 2 + 100)
-            screen.blit(home_image, image_rect)
-        if prompt == 4:
-            image_rect = research_image.get_rect()
-            image_rect.center = (screen_width // 2, screen_height // 2 + 100)
-            screen.blit(research_image, image_rect)
-        if prompt == 5:
-            image_rect = job_image.get_rect()
-            image_rect.center = (screen_width // 2, screen_height // 2 + 100)
-            screen.blit(job_image, image_rect)
-        mouse_x, mouse_y = pg.mouse.get_pos()
-        for event in pg.event.get():
-            if event.type == pg.QUIT:
-                running = False
-                break
-            if event.type == pg.MOUSEBUTTONDOWN:
-                button_clicked = True
-            if event.type == pg.MOUSEBUTTONUP:
-                button_clicked = False
-
-        for button in buttons:
-            if pg.Rect.collidepoint(button.button_rect, mouse_x, mouse_y):
-                button.draw(0, 0, hover=True)  # Added tut_screen parameter
-                if button_clicked:
-                    button.func()
-                    button_clicked = False
-            else:
-                button.draw(0, 0, hover=False)  # Draw button even when not hovering
-        if prompt >= len(prompts):
-            break
-        text = text_font.render(prompts[prompt], True, user_color_1)
-        text_rect = text.get_rect()
-        text_rect.center = (screen_width // 2, screen_height // 2 - 200)
-        screen.blit(text, text_rect)
-        clock.tick(60)
-        pg.display.update()
-
-
 def next():
     global prompt
     prompt += 1
@@ -755,6 +696,17 @@ def gatherer_decrease():
 
 async def main():
     global civilization, fire, stone_tools, pottery, cultivation, writing, metallurgy, education, agriculture, butchery, iron, mathematics, fertilizer, smithing, chemistry, steel, medicine, gunpowder, colonies, steam, hygiene, industry, electricity, materials, cities, antibiotics, plastics, processed, semiconductors, SPACE, genetics, GMOs, internet, fusion, robots, quantum, food_eng, nanotubes, AI, organs, wetware, ftl, space_colony, entropy, singularity, layers, screen_width, screen_height, running, button_clicked, button, humans, food, resources, seconds, knowledge, unemployed, frame,workers
+    global tab_image
+    global running
+    global button_clicked
+    global prompt
+    global prompts
+    global screen_width, screen_height
+    tutorial = True
+    prompt = 0
+    forward_button = Button("Next", next, x=screen_width // 2 + 200, y=screen_height // 2 + 300)
+    back_button = Button("Back", back, x=screen_width // 2 - 200, y=screen_height // 2 + 300)
+    skip_button = Button("Skip", skip, x=screen_width // 2, y=screen_height // 2 + 300)
     home_tab = TabButton("home", home_scene)
     research_tab = TabButton("research", research_scene)
     settings_tab = TabButton("settings", settings_scene)
@@ -971,160 +923,209 @@ async def main():
                     scholar_decrease_button, gatherer_increase_button, gatherer_decrease_button,
                     builder_increase_button,
                     builder_decrease_button]
+    tutorial_buttons = [forward_button,back_button,skip_button]
     research_buttons = [button for layer in layers.values() for button in layer]
     settings_buttons = [theme_button, reset_button, tutorial_button]
     buttons_list = [tab_buttons, home_buttons, research_buttons, settings_buttons]
-    tutorial()
+    #tutorial()
     home_scene()
     while running:
-        screen.fill(user_color_2)
-        screen_width, screen_height = screen.get_size()
-        mouse_x, mouse_y = pg.mouse.get_pos()
-        tab_button = 0
-        # event loop
-        for event in pg.event.get():
-            if event.type == pg.QUIT:
-                running = False
-                break
-            if event.type == pg.MOUSEBUTTONDOWN:
-                button_clicked = True
-            if event.type == pg.MOUSEBUTTONUP:
-                button_clicked = False
-            if current_scene == 'research':
-                handle_research_scrolling(event)
-        if current_scene == "home":
-            for button in home_buttons:
-                button.enabled = True
-            for list in research_buttons, settings_buttons:
+        if tutorial:
+            screen.fill(user_color_2)
+            if prompt == 2:
+                image_rect = tab_image.get_rect()
+                image_rect.center = (screen_width // 2, screen_height // 2 + 100)
+                screen.blit(tab_image, image_rect)
+            if prompt == 3:
+                image_rect = home_image.get_rect()
+                image_rect.center = (screen_width // 2, screen_height // 2 + 100)
+                screen.blit(home_image, image_rect)
+            if prompt == 4:
+                image_rect = research_image.get_rect()
+                image_rect.center = (screen_width // 2, screen_height // 2 + 100)
+                screen.blit(research_image, image_rect)
+            if prompt == 5:
+                image_rect = job_image.get_rect()
+                image_rect.center = (screen_width // 2, screen_height // 2 + 100)
+                screen.blit(job_image, image_rect)
+            mouse_x, mouse_y = pg.mouse.get_pos()
+            for event in pg.event.get():
+                if event.type == pg.QUIT:
+                    running = False
+                    break
+                if event.type == pg.MOUSEBUTTONDOWN:
+                    button_clicked = True
+                if event.type == pg.MOUSEBUTTONUP:
+                    button_clicked = False
+
+            for button in tutorial_buttons:
+                if pg.Rect.collidepoint(button.button_rect, mouse_x, mouse_y):
+                    button.draw(0, 0, hover=True)  # Added tut_screen parameter
+                    if button_clicked:
+                        button.func()
+                        button_clicked = False
+                else:
+                    button.draw(0, 0, hover=False)  # Draw button even when not hovering
+            if prompt >= len(prompts):
+                tutorial = False
+            else:
+                text = text_font.render(prompts[prompt], True, user_color_1)
+                text_rect = text.get_rect()
+                text_rect.center = (screen_width // 2, screen_height // 2 - 200)
+                screen.blit(text, text_rect)
+            clock.tick(60)
+            pg.display.update()
+
+        else:
+            screen.fill(user_color_2)
+            screen_width, screen_height = screen.get_size()
+            mouse_x, mouse_y = pg.mouse.get_pos()
+            tab_button = 0
+            # event loop
+            for event in pg.event.get():
+                if event.type == pg.QUIT:
+                    running = False
+                    break
+                if event.type == pg.MOUSEBUTTONDOWN:
+                    button_clicked = True
+                if event.type == pg.MOUSEBUTTONUP:
+                    button_clicked = False
+                if current_scene == 'research':
+                    handle_research_scrolling(event)
+            if current_scene == "home":
+                for button in home_buttons:
+                    button.enabled = True
+                for list in research_buttons, settings_buttons:
+                    for button in list:
+                        button.enabled = False
+                hunter_text = text_font.render(f'{hunters} hunters', True, user_color_1)
+                hunter_rect = hunter_text.get_rect()
+                hunter_rect.center = (screen_width // 2, 225)
+                screen.blit(hunter_text, hunter_rect)
+                scholar_text = text_font.render(f'{scholars} scholars', True, user_color_1)
+                scholar_rect = scholar_text.get_rect()
+                scholar_rect.center = (screen_width // 2, 275)
+                screen.blit(scholar_text, scholar_rect)
+                gatherer_text = text_font.render(f'{gatherers} {" gatherers" if not metallurgy.used else " miners"}', True,
+                                                 user_color_1)
+                gatherer_rect = gatherer_text.get_rect()
+                gatherer_rect.center = (screen_width // 2, 325)
+                screen.blit(gatherer_text, gatherer_rect)
+                builder_text = text_font.render(f'{builders} builders', True, user_color_1)
+                builder_rect = builder_text.get_rect()
+                builder_rect.center = (screen_width // 2, 375)
+                screen.blit(builder_text, builder_rect)
+
+            if current_scene == "research":
+                for list in home_buttons, settings_buttons:
+                    for button in list:
+                        button.enabled = False
+                for button in research_buttons:
+                    button.enabled = True
+
+            if current_scene == "settings":
+                for list in home_buttons, research_buttons:
+                    for button in list:
+                        button.enabled = False
+                for button in settings_buttons:
+                    button.enabled = True
+
+
+            elif current_scene == "about":
+                for list in home_buttons, research_buttons, settings_buttons:
+                    for button in list:
+                        button.enabled = False
+                about_text = text_font.render('this really pulsars my cubes', True, user_color_1)
+                about_rect = about_text.get_rect()
+                about_rect.center = (800, 700)
+                screen.blit(about_text, about_rect)
+                stats_text = text_font.render(f'you have played for {shrink_time(seconds)}', True,
+                                              user_color_1)
+                stats_rect = stats_text.get_rect()
+                stats_rect.center = (800, 400)
+                screen.blit(stats_text, stats_rect)
+                # button loooop
+            for list in buttons_list:
                 for button in list:
-                    button.enabled = False
-            hunter_text = text_font.render(f'{hunters} hunters', True, user_color_1)
-            hunter_rect = hunter_text.get_rect()
-            hunter_rect.center = (screen_width // 2, 225)
-            screen.blit(hunter_text, hunter_rect)
-            scholar_text = text_font.render(f'{scholars} scholars', True, user_color_1)
-            scholar_rect = scholar_text.get_rect()
-            scholar_rect.center = (screen_width // 2, 275)
-            screen.blit(scholar_text, scholar_rect)
-            gatherer_text = text_font.render(f'{gatherers} {" gatherers" if not metallurgy.used else " miners"}', True,
-                                             user_color_1)
-            gatherer_rect = gatherer_text.get_rect()
-            gatherer_rect.center = (screen_width // 2, 325)
-            screen.blit(gatherer_text, gatherer_rect)
-            builder_text = text_font.render(f'{builders} builders', True, user_color_1)
-            builder_rect = builder_text.get_rect()
-            builder_rect.center = (screen_width // 2, 375)
-            screen.blit(builder_text, builder_rect)
-
-        if current_scene == "research":
-            for list in home_buttons, settings_buttons:
-                for button in list:
-                    button.enabled = False
-            for button in research_buttons:
-                button.enabled = True
-
-        if current_scene == "settings":
-            for list in home_buttons, research_buttons:
-                for button in list:
-                    button.enabled = False
-            for button in settings_buttons:
-                button.enabled = True
-
-
-        elif current_scene == "about":
-            for list in home_buttons, research_buttons, settings_buttons:
-                for button in list:
-                    button.enabled = False
-            about_text = text_font.render('this really pulsars my cubes', True, user_color_1)
-            about_rect = about_text.get_rect()
-            about_rect.center = (800, 700)
-            screen.blit(about_text, about_rect)
-            stats_text = text_font.render(f'you have played for {shrink_time(seconds)}', True,
-                                          user_color_1)
-            stats_rect = stats_text.get_rect()
-            stats_rect.center = (800, 400)
-            screen.blit(stats_text, stats_rect)
-            # button loooop
-        for list in buttons_list:
-            for button in list:
-                if button.enabled:
-                    if isinstance(button, TabButton):
-                        button.draw(50, tab_button)
-                        if pg.Rect.collidepoint(button.button_rect, mouse_x, mouse_y):
-                            button.draw(50, tab_button, True)
-                            if button_clicked:
-                                button.func()
-                                button_clicked = False
-                        tab_button += 1
-                    if civ or button is civilization or button in settings_buttons:
-                        if isinstance(button, ResearchButton):
-
-                            button.draw(400, 400, layers[button.layer].index(button))
+                    if button.enabled:
+                        if isinstance(button, TabButton):
+                            button.draw(50, tab_button)
                             if pg.Rect.collidepoint(button.button_rect, mouse_x, mouse_y):
-                                button.draw(400, 400, layers[button.layer].index(button), True)
-                                if button_clicked:
-                                    if button.is_researchable():
-                                        button.func(button.id)
-                                        button.used = True
-                        else:
-                            button.draw(screen_width / 2, screen_height / 2)
-                            if pg.Rect.collidepoint(button.button_rect, mouse_x, mouse_y):
-                                button.draw(screen_width / 2, screen_height / 2, True)
+                                button.draw(50, tab_button, True)
                                 if button_clicked:
                                     button.func()
                                     button_clicked = False
+                            tab_button += 1
+                        if civ or button is civilization or button in settings_buttons:
+                            if isinstance(button, ResearchButton):
 
-        humans_text = text_font.render(f'{shrink_num(humans)} {"people" if humans != 1 else "person"}', True,
-                                       user_color_1)
-        humans_rect = humans_text.get_rect()
-        humans_rect.center = (100, 50)
-        screen.blit(humans_text, humans_rect)
+                                button.draw(400, 400, layers[button.layer].index(button))
+                                if pg.Rect.collidepoint(button.button_rect, mouse_x, mouse_y):
+                                    button.draw(400, 400, layers[button.layer].index(button), True)
+                                    if button_clicked:
+                                        if button.is_researchable():
+                                            button.func(button.id)
+                                            button.used = True
+                            else:
+                                button.draw(screen_width / 2, screen_height / 2)
+                                if pg.Rect.collidepoint(button.button_rect, mouse_x, mouse_y):
+                                    button.draw(screen_width / 2, screen_height / 2, True)
+                                    if button_clicked:
+                                        button.func()
+                                        button_clicked = False
 
-        food_text = text_font.render(f'{shrink_num(food)} food', True, user_color_1)
-        food_rect = food_text.get_rect()
-        food_rect.center = (80, 100)
-        screen.blit(food_text, food_rect)
+            humans_text = text_font.render(f'{shrink_num(humans)} {"people" if humans != 1 else "person"}', True,
+                                           user_color_1)
+            humans_rect = humans_text.get_rect()
+            humans_rect.center = (100, 50)
+            screen.blit(humans_text, humans_rect)
 
-        knowledge_text = text_font.render(f'{shrink_num(knowledge)} knowledge', True, user_color_1)
-        knowledge_rect = knowledge_text.get_rect()
-        knowledge_rect.center = (130, 150)
-        screen.blit(knowledge_text, knowledge_rect)
+            food_text = text_font.render(f'{shrink_num(food)} food', True, user_color_1)
+            food_rect = food_text.get_rect()
+            food_rect.center = (80, 100)
+            screen.blit(food_text, food_rect)
 
-        resources_text = text_font.render(f'{shrink_num(resources)} resources', True, user_color_1)
-        resources_rect = resources_text.get_rect()
-        resources_rect.center = (120, 200)
-        screen.blit(resources_text, resources_rect)
+            knowledge_text = text_font.render(f'{shrink_num(knowledge)} knowledge', True, user_color_1)
+            knowledge_rect = knowledge_text.get_rect()
+            knowledge_rect.center = (130, 150)
+            screen.blit(knowledge_text, knowledge_rect)
 
-        houses_text = text_font.render(f'{houses} houses', True, user_color_1)
-        houses_rect = houses_text.get_rect()
-        houses_rect.center = (100, 250)
-        screen.blit(houses_text, houses_rect)
+            resources_text = text_font.render(f'{shrink_num(resources)} resources', True, user_color_1)
+            resources_rect = resources_text.get_rect()
+            resources_rect.center = (120, 200)
+            screen.blit(resources_text, resources_rect)
 
-        workers = hunters + scholars + gatherers + builders
-        unemployed = humans - unemployed
-        pg.display.update()
-        if food > food_storage:
-            food = food_storage
-        frame += 1
+            houses_text = text_font.render(f'{houses} houses', True, user_color_1)
+            houses_rect = houses_text.get_rect()
+            houses_rect.center = (100, 250)
+            screen.blit(houses_text, houses_rect)
 
-        if frame == 60:
-            breed()
-            food += passive_food
-            resources += passive_resources
-            knowledge += passive_knowledge
-            seconds += 1
-            if seconds % 5 == 0:
+            workers = hunters + scholars + gatherers + builders
+            unemployed = humans - unemployed
+            pg.display.update()
+            if food > food_storage:
+                food = food_storage
+            frame += 1
+
+            if frame == 60:
+                breed()
+                food += passive_food
+                resources += passive_resources
+                knowledge += passive_knowledge
+                seconds += 1
+                if seconds % 5 == 0:
+                    work()
+                    eat()
+                    if food == 0:
+                        humans -= ceil(humans / 10)
+                if seconds % 30 == 0:
+                    death()
                 work()
-                eat()
-                if food == 0:
-                    humans -= ceil(humans / 10)
-            if seconds % 30 == 0:
-                death()
-            work()
-            frame = 0
+                frame = 0
 
         clock.tick(60)
         await asyncio.sleep(0)
+
     pg.quit()
 
 

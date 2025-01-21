@@ -9,6 +9,7 @@ import asyncio
 #TODO think of minigames (v1.1)
 #TODO cross session saving
 #TODO add flavor texts for research
+#TODO dirty rect optimizations (1.1?)
 
 pg.init()
 
@@ -937,7 +938,7 @@ async def main():
     research_buttons = [button for layer in layers.values() for button in layer]
     settings_buttons = [theme_button, reset_button, tutorial_button]
     buttons_list = [tab_buttons, home_buttons, research_buttons, settings_buttons]
-    research_scene()
+    home_scene()
     while running:
         if tutorial:
             screen.fill(user_color_2)
@@ -1110,7 +1111,7 @@ async def main():
 
             workers = hunters + scholars + gatherers + builders
             unemployed = humans - unemployed
-            pg.display.update()
+            pg.display.flip()
             if food > food_storage:
                 food = food_storage
             frame += 1

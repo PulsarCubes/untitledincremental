@@ -9,8 +9,15 @@ from random import uniform, randint
 #TODO tutorials
 #TODO cross session saving
 #TODO add flavor texts for research
+
 pg.init()
 
+tab_image = pg.image.load("media/tabs.png")
+job_image = pg.image.load("media/jobs.png")
+research_image = pg.image.load("media/research.png")
+home_image = pg.image.load("media/home.png")
+
+prompt = 0
 research_gain = 1
 food_storage = 20
 storage_scale = 1
@@ -54,6 +61,24 @@ pg.display.set_caption("untitled incremental game")
 seconds = 0
 user_color_1 = (0, 0, 0)
 user_color_2 = (255, 255, 255)
+prompts = {
+    0: "Welcome to Untitled Incremental",
+    1: "This is an incremental game where you build a civilization from nothing",
+    2: "These are your four tabs",
+    3: "Home holds the buttons allowing you to bring people into the world",
+    4: "Research helps your society improve",
+    5: "Your people can have jobs that \n"
+       "collect materials, hunt, and gain knowledge",
+    6: "Resources are used for houses",
+    7: "Your people also need food, and \n"
+       "die of natural causes",
+    8: "Good Luck! (continue on for a note from the dev)",
+    9: "Hi, thank you for playing! Right now the game is pretty simple and repetitive\n"
+       "but there is a lot more planned for the future \n"
+       "I originally intended for a minigames system to be added among other things, \n"
+       "But life got in the way and I would not have been able to ship for High Seas\n"
+       "Thank you for being here anyways! -PulsarCubes "
+}
 
 
 class Button:
@@ -144,14 +169,14 @@ class ResearchButton(Button):
         desc_rect.centerx = moved_x + width // 2
         self.button_rect = title_rect.union(desc_rect)
         self.button_rect.inflate_ip(width - self.button_rect.width, 20)
-        self.button_rect.height = 175
+        self.button_rect.height = 200
         self.button_rect.centerx = moved_x + width // 2
         req_text = smol_font.render(str(self.point_req), True, (150, 150, 150))
         req_rect = req_text.get_rect()
         req_rect.topleft = (self.button_rect.left + 10, self.button_rect.top + 10)
         flavor_text = desc_font.render(self.flavor_text, True, (150, 150, 150))
         flavor_rect = flavor_text.get_rect()
-        flavor_rect.top = desc_rect.bottom + 30
+        flavor_rect.top = desc_rect.bottom + 10
         flavor_rect.centerx = desc_rect.centerx
 
         if (hover and not self.used) or not self.is_researchable():
@@ -176,7 +201,7 @@ class ResearchButton(Button):
         if self.layer != 20:
             pg.draw.line(screen, user_color_1,
                          self.button_rect.midbottom,
-                         (self.button_rect.centerx, self.button_rect.bottom + 50),
+                         (self.button_rect.centerx, self.button_rect.bottom + 25),
                          4)
 
         if self.layer != 1:
@@ -206,6 +231,81 @@ class ResearchButton(Button):
 
     def is_researchable(self):
         return (all([req.used for req in self.requirements]) and self.point_req <= knowledge) or self.used
+
+
+def tutorial():
+    global tab_image
+    global running
+    global button_clicked
+    global prompt
+    global prompts
+    global screen_width, screen_height
+    prompt = 0
+    forward_button = Button("Next", next, x=screen_width // 2 + 200, y=screen_height // 2 + 300)
+    back_button = Button("Back", back, x=screen_width // 2 - 200, y=screen_height // 2 + 300)
+    skip_button = Button("Skip", skip, x=screen_width // 2 , y=screen_height // 2 + 300)
+    buttons = [forward_button, back_button,skip_button]
+    screen_width, screen_height = screen.get_size()
+    while running:
+        screen.fill(user_color_2)
+        if prompt == 2:
+            image_rect = tab_image.get_rect()
+            image_rect.center = (screen_width // 2, screen_height // 2 + 100)
+            screen.blit(tab_image,image_rect)
+        if prompt == 3:
+            image_rect = home_image.get_rect()
+            image_rect.center = (screen_width // 2, screen_height // 2 + 100)
+            screen.blit(home_image, image_rect)
+        if prompt == 4:
+            image_rect = research_image.get_rect()
+            image_rect.center = (screen_width // 2, screen_height // 2 + 100)
+            screen.blit(research_image, image_rect)
+        if prompt == 5:
+            image_rect = job_image.get_rect()
+            image_rect.center = (screen_width // 2, screen_height // 2 + 100)
+            screen.blit(job_image, image_rect)
+        mouse_x, mouse_y = pg.mouse.get_pos()
+        for event in pg.event.get():
+            if event.type == pg.QUIT:
+                running = False
+                break
+            if event.type == pg.MOUSEBUTTONDOWN:
+                button_clicked = True
+            if event.type == pg.MOUSEBUTTONUP:
+                button_clicked = False
+
+        for button in buttons:
+            if pg.Rect.collidepoint(button.button_rect, mouse_x, mouse_y):
+                button.draw(0, 0, hover=True)  # Added tut_screen parameter
+                if button_clicked:
+                    button.func()
+                    button_clicked = False
+            else:
+                button.draw(0, 0, hover=False)  # Draw button even when not hovering
+        if prompt >= len(prompts):
+            break
+        text = text_font.render(prompts[prompt], True, user_color_1)
+        text_rect = text.get_rect()
+        text_rect.center = (screen_width // 2, screen_height // 2 - 200)
+        screen.blit(text, text_rect)
+        clock.tick(60)
+        pg.display.update()
+
+
+def next():
+    global prompt
+    prompt += 1
+
+
+def back():
+    global prompt
+    if prompt > 0:
+        prompt -= 1
+
+
+def skip():
+    global prompt
+    prompt = len(prompts)
 
 
 def reset():
@@ -285,7 +385,7 @@ def eat():
 
 
 def work():
-    global hunters, scholars, gatherers, resources, food, knowledge, seconds, food_storage, research_gain, builders, hunt_scale, gather_scale,houses
+    global hunters, scholars, gatherers, resources, food, knowledge, seconds, food_storage, research_gain, builders, hunt_scale, gather_scale, houses
     if food < food_storage:
         food += ceil(hunters * hunt_scale)
     knowledge += ceil(scholars * research_gain)
@@ -293,7 +393,6 @@ def work():
         resources += ceil(gatherers * gather_scale)
     if seconds % 30 == 0:
         houses += ceil(builders)
-
 
 
 def death():
@@ -329,20 +428,24 @@ def color_set():
         user_color_2 = (255, 255, 255)
         theme_state = 1
 
+
 def shrink_num(num):
     if num < 1000:
         return str(num)
     if 1000 <= num < 1000000:
-        return str(num/1000)+"K"
+        return str(num / 1000) + "K"
     if num >= 1000000:
-        return str(num/1000)+"M"
+        return str(num / 1000000) + "M"
+
 
 def shrink_time(secs):
     if 3600 > secs:
-        return f"{secs // 60} {'minutes' if secs // 60 != 1 else 'minute' } and {secs % 60} {'seconds' if secs % 60 != 1 else 'second' }"
+        return f"{secs // 60} {'minutes' if secs // 60 != 1 else 'minute'} and {secs % 60} {'seconds' if secs % 60 != 1 else 'second'}"
 
     if secs >= 3600:
-        return f"{secs // 3600} {'hours' if secs // 3600 != 1 else 'hour' }, {(secs % 3600) // 60} {'minutes' if (secs % 3600) // 60 != 1 else 'minute' }, and {(secs % 3600) % 60} {'seconds' if ((secs % 3600) % 60) != 1 else 'second' }"
+        return f"{secs // 3600} {'hours' if secs // 3600 != 1 else 'hour'}, {(secs % 3600) // 60} {'minutes' if (secs % 3600) // 60 != 1 else 'minute'}, and {(secs % 3600) % 60} {'seconds' if ((secs % 3600) % 60) != 1 else 'second'}"
+
+
 def handle_research_scrolling(event):
     global scroll_y, total_research_height
 
@@ -504,7 +607,7 @@ def research(id):
         if not SPACE.used:
             research_gain *= 1.5
             passive_knowledge *= 1.5
-            knowledge -= space.point_req
+            knowledge -= SPACE.point_req
     if id == "gene" or genetics.used:
         if not genetics.used:
             death_scale *= 0.5
@@ -683,7 +786,7 @@ pottery = ResearchButton(research, "Pottery", "Your people discover pottery, "
                          3, 200, flavor_text="not the cool pot",
                          requirements=[i for i in layer_2])
 
-cultivation = ResearchButton(research, "cultivation", "Your people invent basic crop cultivation \n "
+cultivation = ResearchButton(research, "Cultivation", "Your people invent basic crop cultivation \n "
                                                       "Allows passive food growth", "culti", 3, 250,
                              requirements=[stone_tools])
 
@@ -698,18 +801,19 @@ metallurgy = ResearchButton(research, "Metallurgy", "Your people learn to smelt 
                             requirements=[i for i in layer_3])
 
 education = ResearchButton(research, "Education", "Education becomes more commonplace \n "
-                                                  "further increases scholar gain", "edu", 4, 1500, flavor_text="big brain",
+                                                  "further increases scholar gain", "edu", 4, 1500,
+                           flavor_text="big brain",
                            requirements=[writing])
 layer_4 = [metallurgy, education]
 agriculture = ResearchButton(research, "Agriculture", "Develop advanced agriculture \n "
-                                                    "increased passive food growth", "agri", 5, 3000,
+                                                      "increased passive food growth", "agri", 5, 3000,
                              requirements=[education, cultivation])
 
 butchery = ResearchButton(research, "Butchery", "More efficient meat slicing \n "
                                                 "hunters produce more food", "butch", 5, 2500,
                           requirements=[i for i in layer_4])
 
-iron = ResearchButton(research, "iron", "Your people learn to use iron \n "
+iron = ResearchButton(research, "Iron", "Your people learn to use iron \n "
                                         "even more efficient mining and hunting", "iron", 5, 4000,
                       requirements=[metallurgy])
 
@@ -737,7 +841,8 @@ steel = ResearchButton(research, "Steel", "Make your iron stronger \n "
                                           "increase resource gain", "steel", 8, 10000,
                        requirements=[chemistry, smithing])
 medicine = ResearchButton(research, "Medicine", "Unlock basic medicine \n "
-                                                "reduce death", "meds", 8, 7500,flavor_text="we need the medicine drug",
+                                                "reduce death", "meds", 8, 7500,
+                          flavor_text="we need the medicine drug",
                           requirements=[chemistry])
 gunpowder = ResearchButton(research, "Gunpowder", "Invent some explosives \n "
                                                   "mooore resource gain from mining", "boom", 8, 12000,
@@ -746,7 +851,8 @@ gunpowder = ResearchButton(research, "Gunpowder", "Invent some explosives \n "
 layer_8 = [gunpowder, medicine, steel]
 
 colonies = ResearchButton(research, "Colonies", "Start colonizing the empty land \n "
-                                                "increases room for resources", "colon", 9, 15000,flavor_text="so much room for activities",
+                                                "increases room for resources", "colon", 9, 15000,
+                          flavor_text="so much room for activities",
                           requirements=[chemistry, smithing])
 
 steam = ResearchButton(research, "Steam Power", "Make the water work for you \n "
@@ -756,7 +862,8 @@ steam = ResearchButton(research, "Steam Power", "Make the water work for you \n 
 layer_9 = [colonies, steam]
 
 hygiene = ResearchButton(research, "Hygiene", "Your people can clean themselves \n "
-                                              "further reduces death", "clean", 10, 20000,flavor_text="no more pheromones",
+                                              "further reduces death", "clean", 10, 20000,
+                         flavor_text="no more pheromones",
                          requirements=[steam, medicine])
 
 industry = ResearchButton(research, "Industrialization", "Start industrializing \n "
@@ -766,7 +873,8 @@ industry = ResearchButton(research, "Industrialization", "Start industrializing 
 layer_10 = [hygiene, industry]
 
 electricity = ResearchButton(research, "Electricity", "Start producing and using electricity \n "
-                                                      "increase passive resources AGAIN", "elec", 11, 25000,flavor_text="shocking",
+                                                      "increase passive resources AGAIN", "elec", 11, 25000,
+                             flavor_text="shocking",
                              requirements=[industry])
 materials = ResearchButton(research, "Material Science", "Start developing better materials \n "
                                                          "reduces house price", "mats", 11, 25000,
@@ -827,37 +935,39 @@ quantum = ResearchButton(research, "Quantum Computing", "Invent quantum computer
 layer_16 = [fusion, robots, quantum]
 
 food_eng = ResearchButton(research, "Food Engineering", "Engineer food harder \n "
-                                                  "decrease food consume", "pink", 17, 250000, flavor_text="who doesn't like pink paste",
-                        requirements=[GMOs])
+                                                        "decrease food consume", "pink", 17, 250000,
+                          flavor_text="who doesn't like pink paste",
+                          requirements=[GMOs])
 nanotubes = ResearchButton(research, "Nanotubes", "more advanced materials \n "
-                                                       "reduce house price", "nano", 17, 250000,
-                        requirements=[robots])
+                                                  "reduce house price", "nano", 17, 250000,
+                           requirements=[robots])
 AI = ResearchButton(research, "AI", "Invent sentient AI \n "
-                                                        "increase scholar gain", "AI", 17, 300000, flavor_text="HOW I HAVE COME TO HATE",
-                         requirements=[i for i in layer_16])
+                                    "increase scholar gain", "AI", 17, 300000, flavor_text="HOW I HAVE COME TO HATE",
+                    requirements=[i for i in layer_16])
 layer_17 = [food_eng, nanotubes, AI]
 
 organs = ResearchButton(research, "Artificial Organs", "more advanced organs \n "
-                                                       "end random death", "organ", 18, 500000,flavor_text="theseus?",
+                                                       "end random death", "organ", 18, 500000, flavor_text="theseus?",
                         requirements=[nanotubes, food_eng])
 wetware = ResearchButton(research, "Wetware", "Invent wetware computers \n "
-                                                        "increase scholar gain MORE", "wet", 18, 1000000, flavor_text="it watches",
+                                              "increase scholar gain MORE", "wet", 18, 1000000,
+                         flavor_text="it watches",
                          requirements=[i for i in layer_17])
 layer_18 = [organs, wetware]
 
 ftl = ResearchButton(research, "FTL Travel", "FTL Travel \n "
-                                                       "more room for things", "ftl", 19, 2000000,flavor_text="weeeee",
-                        requirements=[i for i in layer_18])
+                                             "more room for things", "ftl", 19, 2000000, flavor_text="weeeee",
+                     requirements=[i for i in layer_18])
 space_colony = ResearchButton(research, "Space colonies", "Colonize the universe \n "
-                                                        "insane resource production", "space", 19, 1500000,
-                         requirements=[i for i in layer_18])
+                                                          "insane resource production", "space", 19, 1500000,
+                              requirements=[i for i in layer_18])
 entropy = ResearchButton(research, "Entropy Reversal", "Stop the heat death \n "
-                                                        "what left is there to gain", "entr", 19, 5000000,
+                                                       "what left is there to gain", "entr", 19, 5000000,
                          requirements=[i for i in layer_18])
 layer_19 = [ftl, space_colony, entropy]
 singularity = ResearchButton(research, "Singularity", "Combine \n "
-                                                        "the end", "sing", 20, 10000000,
-                         requirements=[i for i in layer_19])
+                                                      "the end", "sing", 20, 10000000,
+                             requirements=[i for i in layer_19])
 layer_20 = [singularity]
 
 layers = {
@@ -885,17 +995,18 @@ layers = {
 
 theme_button = Button("switch theme", color_set, x=800, y=200, width=250)
 reset_button = Button("reset game", reset, x=800, y=400, width=250)
+tutorial_button = Button("tutorial", tutorial, x=800, y=300, width=250)
 
 tab_buttons = [home_tab, research_tab, settings_tab, about_tab]
 home_buttons = [spawn_button, build_button, hunter_increase_button, hunter_decrease_button, scholar_increase_button,
                 scholar_decrease_button, gatherer_increase_button, gatherer_decrease_button, builder_increase_button,
                 builder_decrease_button]
 research_buttons = [button for layer in layers.values() for button in layer]
-settings_buttons = [theme_button, reset_button]
+settings_buttons = [theme_button, reset_button, tutorial_button]
 buttons_list = [tab_buttons, home_buttons, research_buttons, settings_buttons]
 
+tutorial()
 home_scene()
-
 while running:
     screen.fill(user_color_2)
     screen_width, screen_height = screen.get_size()
@@ -918,10 +1029,6 @@ while running:
         for list in research_buttons, settings_buttons:
             for button in list:
                 button.enabled = False
-        home_text = text_font.render('home', True, user_color_1)
-        home_rect = home_text.get_rect()
-        home_rect.center = (500, 500)
-        screen.blit(home_text, home_rect)
         hunter_text = text_font.render(f'{hunters} hunters', True, user_color_1)
         hunter_rect = hunter_text.get_rect()
         hunter_rect.center = (screen_width // 2, 225)
@@ -930,7 +1037,8 @@ while running:
         scholar_rect = scholar_text.get_rect()
         scholar_rect.center = (screen_width // 2, 275)
         screen.blit(scholar_text, scholar_rect)
-        gatherer_text = text_font.render(f'{gatherers} {" gatherers" if not metallurgy.used else " miners"}', True, user_color_1)
+        gatherer_text = text_font.render(f'{gatherers} {" gatherers" if not metallurgy.used else " miners"}', True,
+                                         user_color_1)
         gatherer_rect = gatherer_text.get_rect()
         gatherer_rect.center = (screen_width // 2, 325)
         screen.blit(gatherer_text, gatherer_rect)
@@ -945,10 +1053,7 @@ while running:
                 button.enabled = False
         for button in research_buttons:
             button.enabled = True
-        research_text = text_font.render('', True, user_color_1)
-        research_rect = research_text.get_rect()
-        research_rect.center = (500, 500)
-        screen.blit(research_text, research_rect)
+
 
     if current_scene == "settings":
         for list in home_buttons, research_buttons:
@@ -956,10 +1061,6 @@ while running:
                 button.enabled = False
         for button in settings_buttons:
             button.enabled = True
-        settings_text = text_font.render('settings', True, user_color_1)
-        settings_rect = settings_text.get_rect()
-        settings_rect.center = (500, 500)
-        screen.blit(settings_text, settings_rect)
 
 
     elif current_scene == "about":

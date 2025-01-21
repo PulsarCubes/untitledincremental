@@ -17,6 +17,7 @@ job_image = pg.image.load("media/jobs.png")
 research_image = pg.image.load("media/research.png")
 home_image = pg.image.load("media/home.png")
 
+research_buttons=[]
 prompt = 0
 research_gain = 1
 food_storage = 20
@@ -92,6 +93,7 @@ class Button:
         self.x = x
         self.y = y
 
+
     def draw(self, x, y, hover=False):
         if self.x is not None:
             x = self.x
@@ -108,11 +110,14 @@ class Button:
         text_rect = text.get_rect()
         text_rect.center = self.button_rect.center
         screen.blit(text, text_rect)
+    def is_visible(self):
+        return self.enabled
 
 
 class TabButton(Button):
     def __init__(self, text, func, width=150, height=75):
         super().__init__(text, func, width, height, enabled=True)
+
 
     def draw(self, y, num, hover=False):
         button_count = 4
@@ -139,6 +144,7 @@ class ResearchButton(Button):
         self.layer = layer
         self.point_req = point_req
         self.flavor_text = flavor_text
+        self.visible = True
 
     def draw(self, x, y, num, hover=False):
 
@@ -159,9 +165,10 @@ class ResearchButton(Button):
 
         moved_y = self.layer * 300 + scroll_y
 
-        if moved_y + 175 < 300 or moved_y > screen_height:
+        if moved_y + 175 < 350 or moved_y > screen_height - 50:
             self.button_rect = pg.Rect(moved_x, moved_y, width, 175)
             return
+
 
         title_rect.center = (moved_x + width // 2, moved_y)
         desc_rect = desc_text.get_rect()
@@ -232,7 +239,8 @@ class ResearchButton(Button):
     def is_researchable(self):
         return (all([req.used for req in self.requirements]) and self.point_req <= knowledge) or self.used
 
-
+    def is_visible(self):
+        return False if self.layer * 300 + scroll_y + 175 < 350 or self.layer * 300 + scroll_y > screen_height - 50 else True
 def next():
     global prompt
     prompt += 1
@@ -272,8 +280,10 @@ def home_scene():
 
 def research_scene():
     global current_scene
+    global research_buttons
     current_scene = "research"
-
+    for button in research_buttons:
+        button.enabled = True
 
 def settings_scene():
     global current_scene
@@ -695,7 +705,7 @@ def gatherer_decrease():
 
 
 async def main():
-    global civilization, fire, stone_tools, pottery, cultivation, writing, metallurgy, education, agriculture, butchery, iron, mathematics, fertilizer, smithing, chemistry, steel, medicine, gunpowder, colonies, steam, hygiene, industry, electricity, materials, cities, antibiotics, plastics, processed, semiconductors, SPACE, genetics, GMOs, internet, fusion, robots, quantum, food_eng, nanotubes, AI, organs, wetware, ftl, space_colony, entropy, singularity, layers, screen_width, screen_height, running, button_clicked, button, humans, food, resources, seconds, knowledge, unemployed, frame,workers
+    global civilization, fire, stone_tools, pottery, cultivation, writing, metallurgy, education, agriculture, butchery, iron, mathematics, fertilizer, smithing, chemistry, steel, medicine, gunpowder, colonies, steam, hygiene, industry, electricity, materials, cities, antibiotics, plastics, processed, semiconductors, SPACE, genetics, GMOs, internet, fusion, robots, quantum, food_eng, nanotubes, AI, organs, wetware, ftl, space_colony, entropy, singularity, layers, screen_width, screen_height, running, button_clicked, button, humans, food, resources, seconds, knowledge, unemployed, frame,workers, research_buttons
     global tab_image
     global running
     global button_clicked
@@ -927,8 +937,7 @@ async def main():
     research_buttons = [button for layer in layers.values() for button in layer]
     settings_buttons = [theme_button, reset_button, tutorial_button]
     buttons_list = [tab_buttons, home_buttons, research_buttons, settings_buttons]
-    #tutorial()
-    home_scene()
+    research_scene()
     while running:
         if tutorial:
             screen.fill(user_color_2)
@@ -1020,8 +1029,7 @@ async def main():
                 for list in home_buttons, settings_buttons:
                     for button in list:
                         button.enabled = False
-                for button in research_buttons:
-                    button.enabled = True
+
 
             if current_scene == "settings":
                 for list in home_buttons, research_buttons:
@@ -1056,7 +1064,7 @@ async def main():
                                     button.func()
                                     button_clicked = False
                             tab_button += 1
-                        if civ or button is civilization or button in settings_buttons:
+                        if (civ or button is civilization or button in settings_buttons) and button.is_visible:
                             if isinstance(button, ResearchButton):
 
                                 button.draw(400, 400, layers[button.layer].index(button))
@@ -1107,7 +1115,7 @@ async def main():
                 food = food_storage
             frame += 1
 
-            if frame == 60:
+            if frame == 30:
                 breed()
                 food += passive_food
                 resources += passive_resources
@@ -1123,7 +1131,7 @@ async def main():
                 work()
                 frame = 0
 
-        clock.tick(60)
+        clock.tick(30)
         await asyncio.sleep(0)
 
     pg.quit()

@@ -1208,7 +1208,7 @@ async def main():
                 food = food_storage
             frame += 1
 
-            if frame == 30:
+            if frame == 60:
                 breed()
                 food += passive_food
                 resources += passive_resources
@@ -1225,7 +1225,7 @@ async def main():
                 renderer.text_cache.clear()
                 frame = 0
 
-        clock.tick(30)
+        clock.tick(60)
         await asyncio.sleep(0)
 
     pg.quit()

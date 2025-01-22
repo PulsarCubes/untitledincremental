@@ -129,7 +129,6 @@ class GameRenderer:
 
         self.text_cache.add_dirty_rect(text_rect)
 
-        # Blit to screen
         self.screen.blit(text_surface, text_rect)
         return text_rect
 
@@ -1099,14 +1098,8 @@ async def main():
                 for list in research_buttons, settings_buttons:
                     for button in list:
                         button.enabled = False
-                hunter_text = text_font.render(f'{hunters} hunters', True, user_color_1)
-                hunter_rect = hunter_text.get_rect()
-                hunter_rect.center = (screen_width // 2, 225)
-                screen.blit(hunter_text, hunter_rect)
-                scholar_text = text_font.render(f'{scholars} scholars', True, user_color_1)
-                scholar_rect = scholar_text.get_rect()
-                scholar_rect.center = (screen_width // 2, 275)
-                screen.blit(scholar_text, scholar_rect)
+                renderer.render_text(f'{hunters} hunters',text_font, user_color_1,(screen_width // 2,225))
+                renderer.render_text(f'{scholars} scholars', text_font, user_color_1, (screen_width // 2, 275)) 
                 gatherer_text = text_font.render(f'{gatherers} {" gatherers" if not metallurgy.used else " miners"}',
                                                  True,
                                                  user_color_1)

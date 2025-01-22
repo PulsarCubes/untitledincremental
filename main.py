@@ -3,13 +3,12 @@ from math import floor, ceil
 from random import uniform, randint
 import asyncio
 
-#remember to use pygbag you pygfag
 #TODO age labels (v1.1)
 #TODO adjust button sizes based on window size?
 #TODO think of minigames (v1.1)
 #TODO cross session saving
 #TODO add flavor texts for research
-#TODO dirty rect optimizations (1.1?)
+#TODO !!add caching for resource labels
 
 pg.init()
 
@@ -18,7 +17,7 @@ job_image = pg.image.load("media/jobs.png")
 research_image = pg.image.load("media/research.png")
 home_image = pg.image.load("media/home.png")
 
-research_buttons=[]
+research_buttons = []
 prompt = 0
 research_gain = 1
 food_storage = 20
@@ -43,7 +42,6 @@ humans = 0
 hunters = 0
 scholars = 0
 builders = 0
-#change to miners after tools/mining unlocked or something
 gatherers = 0
 unemployed = 0
 knowledge = 0
@@ -83,6 +81,91 @@ prompts = {
 }
 
 
+class TextCache:
+    def __init__(self):
+        self.cache = {}
+        self.dirty_rects = []
+        self.previous_frame_rects = []
+
+    def get_text(self, text, font, color) -> tuple:
+        cache_key = f"{text}_{id(font)}_{color}"
+        is_new = False
+
+        if cache_key not in self.cache:
+            self.cache[cache_key] = font.render(text, True, color)
+            is_new = True
+
+        return self.cache[cache_key], is_new
+
+    def clear(self):
+        self.cache.clear()
+
+    def add_dirty_rect(self, rect: pg.Rect):
+        self.dirty_rects.append(rect)
+
+    def get_update_rects(self) -> list[pg.Rect]:
+        update_rects = self.dirty_rects + self.previous_frame_rects
+        self.previous_frame_rects = self.dirty_rects.copy()
+        self.dirty_rects.clear()
+        return update_rects
+
+
+class GameRenderer:
+    def __init__(self, screen):
+        self.screen = screen
+        self.text_cache = TextCache()
+        self.background = pg.Surface(screen.get_size())
+        self.background_dirty = True
+
+    def render_text(self, text, font, color,
+                    position, center=True) -> pg.Rect:
+        text_surface, is_new = self.text_cache.get_text(text, font, color)
+        text_rect = text_surface.get_rect()
+
+        if center:
+            text_rect.center = position
+        else:
+            text_rect.topleft = position
+
+        self.text_cache.add_dirty_rect(text_rect)
+
+        # Blit to screen
+        self.screen.blit(text_surface, text_rect)
+        return text_rect
+
+    def render_button(self, button, hover=False):
+
+        if hover:
+            color = (150, 150, 150)
+        else:
+            color = user_color_1
+
+        pg.draw.rect(self.screen, color, button.button_rect, width=4, border_radius=1)
+        self.text_cache.add_dirty_rect(button.button_rect)
+
+        self.render_text(
+            button.text,
+            button_font,
+            color,
+            button.button_rect.center
+        )
+
+    def update_display(self):
+        update_rects = self.text_cache.get_update_rects()
+        if update_rects:
+            pg.display.update(update_rects)
+
+    def render_background(self):
+        if self.background_dirty:
+            self.background.fill(user_color_2)
+            self.background_dirty = False
+        self.screen.blit(self.background, (0, 0))
+        self.text_cache.add_dirty_rect(self.screen.get_rect())
+
+
+renderer = GameRenderer(screen)
+
+
 class Button:
     def __init__(self, text, func, width=150, height=75, enabled=True, x=None, y=None):
         self.text = text
@@ -94,31 +177,27 @@ class Button:
         self.x = x
         self.y = y
 
-
     def draw(self, x, y, hover=False):
         if self.x is not None:
             x = self.x
         if self.y is not None:
             y = self.y
-        self.button_rect.center = (x, y)
-        if hover:
-            pg.draw.rect(screen, (150, 150, 150), self.button_rect, width=4, border_radius=1)
-            text = button_font.render(self.text, True, (150, 150, 150))
-        else:
-            pg.draw.rect(screen, user_color_1, self.button_rect, width=4, border_radius=1)
-            text = button_font.render(self.text, True, user_color_1)
 
-        text_rect = text.get_rect()
-        text_rect.center = self.button_rect.center
-        screen.blit(text, text_rect)
-    def is_visible(self):
+        old_rect = self.button_rect.copy()
+        self.button_rect.center = x, y
+
+        renderer.text_cache.add_dirty_rect(old_rect)
+        renderer.text_cache.add_dirty_rect(self.button_rect)
+
+        renderer.render_button(self, hover)
+
+    def is_visible(self) -> bool:
         return self.enabled
 
 
 class TabButton(Button):
     def __init__(self, text, func, width=150, height=75):
         super().__init__(text, func, width, height, enabled=True)
-
 
     def draw(self, y, num, hover=False):
         button_count = 4
@@ -145,86 +224,93 @@ class ResearchButton(Button):
         self.layer = layer
         self.point_req = point_req
         self.flavor_text = flavor_text
-        self.visible = True
 
     def draw(self, x, y, num, hover=False):
-
         width = 500
         button_spacing = 20
         index = layers[self.layer].index(self)
         num_in_layer = len(layers[self.layer])
         research_buttons_width = width * num_in_layer + button_spacing * (num_in_layer - 1)
-        title_font = pg.font.SysFont('Corbel', 50, True)
+
         desc_font = pg.font.SysFont('Corbel', 30)
         smol_font = pg.font.SysFont('Corbel', 25, bold=True)
 
-        desc_text = desc_font.render(self.desc, True, user_color_1)
-        title_text = title_font.render(self.title, True, user_color_1)
-        title_rect = title_text.get_rect()
-        start_x = (screen_width - research_buttons_width) // 2
-        moved_x = start_x + num * (width + button_spacing)
-
+        moved_x = (screen_width - research_buttons_width) // 2 + num * (width + button_spacing)
         moved_y = self.layer * 300 + scroll_y
 
         if moved_y + 175 < 350 or moved_y > screen_height - 50:
             self.button_rect = pg.Rect(moved_x, moved_y, width, 175)
             return
 
+        old_rect = self.button_rect.copy()
 
-        title_rect.center = (moved_x + width // 2, moved_y)
-        desc_rect = desc_text.get_rect()
-        desc_rect.y = title_rect.bottom
-        desc_rect.centerx = moved_x + width // 2
-        self.button_rect = title_rect.union(desc_rect)
-        self.button_rect.inflate_ip(width - self.button_rect.width, 20)
-        self.button_rect.height = 200
+        self.button_rect = pg.Rect(moved_x, moved_y, width, 200)
         self.button_rect.centerx = moved_x + width // 2
-        req_text = smol_font.render(str(self.point_req), True, (150, 150, 150))
-        req_rect = req_text.get_rect()
-        req_rect.topleft = (self.button_rect.left + 10, self.button_rect.top + 10)
-        flavor_text = desc_font.render(self.flavor_text, True, (150, 150, 150))
-        flavor_rect = flavor_text.get_rect()
-        flavor_rect.top = desc_rect.bottom + 10
-        flavor_rect.centerx = desc_rect.centerx
+
+        renderer.text_cache.add_dirty_rect(old_rect)
+        renderer.text_cache.add_dirty_rect(self.button_rect)
 
         if (hover and not self.used) or not self.is_researchable():
-            pg.draw.rect(screen, (150, 150, 150), self.button_rect, width=5, border_radius=1)
-            desc_text = desc_font.render(self.desc, True, (150, 150, 150))
-            title_text = title_font.render(self.title, True, (150, 150, 150))
-            req_text = smol_font.render(shrink_num(self.point_req), True, (150, 150, 150))
+            color = (150, 150, 150)
         elif self.used:
-            pg.draw.rect(screen, (34, 139, 34), self.button_rect, width=5, border_radius=1)
-            desc_text = desc_font.render(self.desc, True, (34, 139, 34))
-            title_text = title_font.render(self.title, True, (34, 139, 34))
-            req_text = smol_font.render(shrink_num(self.point_req), True, (34, 139, 34))
+            color = (34, 139, 34)
         else:
-            pg.draw.rect(screen, (255, 236, 161), self.button_rect, width=5, border_radius=1)
-            desc_text = desc_font.render(self.desc, True, user_color_1)
-            title_text = title_font.render(self.title, True, user_color_1)
-            req_text = smol_font.render(shrink_num(self.point_req), True, user_color_1)
-        screen.blit(title_text, title_rect)
-        screen.blit(desc_text, desc_rect)
-        screen.blit(req_text, req_rect)
-        screen.blit(flavor_text, flavor_rect)
+            color = (255, 236, 161)
+
+        pg.draw.rect(screen, color, self.button_rect ,width=5, border_radius=1)
+
+        title_pos = (self.button_rect.centerx, moved_y+50)
+        renderer.render_text(self.title, pg.font.SysFont('Corbel', 50, True), user_color_1, title_pos)
+
+        desc_pos = (self.button_rect.centerx, moved_y + 100)
+        renderer.render_text(self.desc, desc_font, user_color_1, desc_pos)
+
+        req_pos = (self.button_rect.left + 10, self.button_rect.top + 10)
+        renderer.render_text(shrink_num(self.point_req), smol_font, user_color_1, req_pos, center=False)
+
+        flavor_pos = (self.button_rect.centerx, self.button_rect.bottom - 30)
+        renderer.render_text(self.flavor_text, desc_font, (150, 150, 150), flavor_pos)
+
         if self.layer != 20:
             pg.draw.line(screen, user_color_1,
                          self.button_rect.midbottom,
                          (self.button_rect.centerx, self.button_rect.bottom + 25),
                          4)
+            renderer.text_cache.add_dirty_rect(pg.Rect(
+                self.button_rect.centerx - 2,
+                self.button_rect.bottom,
+                4,
+                25
+            ))
 
         if self.layer != 1:
+            line_rect = pg.Rect(
+                self.button_rect.centerx - 2,
+                self.button_rect.top - 75,
+                4,
+                75
+            )
             pg.draw.line(screen, user_color_1,
                          self.button_rect.midtop,
                          (self.button_rect.centerx, self.button_rect.top - 75),
                          4)
+            renderer.text_cache.add_dirty_rect(line_rect)
+
             num_in_previous = len(layers[self.layer - 1])
             if index == num_in_layer - 1:
                 if num_in_layer >= num_in_previous:
+                    horizontal_line_rect = pg.Rect(
+                        self.button_rect.centerx - (research_buttons_width - width),
+                        self.button_rect.top - 77,
+                        research_buttons_width - width,
+                        4
+                    )
                     pg.draw.line(screen, user_color_1,
                                  (self.button_rect.centerx, self.button_rect.top - 75),
                                  (self.button_rect.centerx - (research_buttons_width - width),
                                   self.button_rect.top - 75),
                                  4)
+                    renderer.text_cache.add_dirty_rect(horizontal_line_rect)
                 else:
                     pg.draw.line(screen, user_color_1,
                                  (self.button_rect.centerx + (
@@ -237,11 +323,14 @@ class ResearchButton(Button):
                                   self.button_rect.top - 75),
                                  4)
 
-    def is_researchable(self):
+
+    def is_researchable(self) -> bool:
         return (all([req.used for req in self.requirements]) and self.point_req <= knowledge) or self.used
 
-    def is_visible(self):
+    def is_visible(self) -> bool:
         return False if self.layer * 300 + scroll_y + 175 < 350 or self.layer * 300 + scroll_y > screen_height - 50 else True
+
+
 def next():
     global prompt
     prompt += 1
@@ -285,6 +374,7 @@ def research_scene():
     current_scene = "research"
     for button in research_buttons:
         button.enabled = True
+
 
 def settings_scene():
     global current_scene
@@ -405,6 +495,7 @@ def handle_research_scrolling(event):
     total_research_height = (max_layer * 300) + 400
 
     if event.type == pg.MOUSEWHEEL:
+        renderer.background_dirty = True
         scroll_y += event.y * scroll_speed
 
         scroll_y = min(0, scroll_y)
@@ -706,7 +797,7 @@ def gatherer_decrease():
 
 
 async def main():
-    global civilization, fire, stone_tools, pottery, cultivation, writing, metallurgy, education, agriculture, butchery, iron, mathematics, fertilizer, smithing, chemistry, steel, medicine, gunpowder, colonies, steam, hygiene, industry, electricity, materials, cities, antibiotics, plastics, processed, semiconductors, SPACE, genetics, GMOs, internet, fusion, robots, quantum, food_eng, nanotubes, AI, organs, wetware, ftl, space_colony, entropy, singularity, layers, screen_width, screen_height, running, button_clicked, button, humans, food, resources, seconds, knowledge, unemployed, frame,workers, research_buttons
+    global civilization, fire, stone_tools, pottery, cultivation, writing, metallurgy, education, agriculture, butchery, iron, mathematics, fertilizer, smithing, chemistry, steel, medicine, gunpowder, colonies, steam, hygiene, industry, electricity, materials, cities, antibiotics, plastics, processed, semiconductors, SPACE, genetics, GMOs, internet, fusion, robots, quantum, food_eng, nanotubes, AI, organs, wetware, ftl, space_colony, entropy, singularity, layers, screen_width, screen_height, running, button_clicked, button, humans, food, resources, seconds, knowledge, unemployed, frame, workers, research_buttons
     global tab_image
     global running
     global button_clicked
@@ -934,7 +1025,7 @@ async def main():
                     scholar_decrease_button, gatherer_increase_button, gatherer_decrease_button,
                     builder_increase_button,
                     builder_decrease_button]
-    tutorial_buttons = [forward_button,back_button,skip_button]
+    tutorial_buttons = [forward_button, back_button, skip_button]
     research_buttons = [button for layer in layers.values() for button in layer]
     settings_buttons = [theme_button, reset_button, tutorial_button]
     buttons_list = [tab_buttons, home_buttons, research_buttons, settings_buttons]
@@ -987,7 +1078,7 @@ async def main():
             pg.display.update()
 
         else:
-            screen.fill(user_color_2)
+            renderer.render_background()
             screen_width, screen_height = screen.get_size()
             mouse_x, mouse_y = pg.mouse.get_pos()
             tab_button = 0
@@ -1016,7 +1107,8 @@ async def main():
                 scholar_rect = scholar_text.get_rect()
                 scholar_rect.center = (screen_width // 2, 275)
                 screen.blit(scholar_text, scholar_rect)
-                gatherer_text = text_font.render(f'{gatherers} {" gatherers" if not metallurgy.used else " miners"}', True,
+                gatherer_text = text_font.render(f'{gatherers} {" gatherers" if not metallurgy.used else " miners"}',
+                                                 True,
                                                  user_color_1)
                 gatherer_rect = gatherer_text.get_rect()
                 gatherer_rect.center = (screen_width // 2, 325)
@@ -1030,7 +1122,6 @@ async def main():
                 for list in home_buttons, settings_buttons:
                     for button in list:
                         button.enabled = False
-
 
             if current_scene == "settings":
                 for list in home_buttons, research_buttons:
@@ -1058,23 +1149,24 @@ async def main():
                 for button in list:
                     if button.enabled:
                         if isinstance(button, TabButton):
-                            button.draw(50, tab_button)
-                            if pg.Rect.collidepoint(button.button_rect, mouse_x, mouse_y):
-                                button.draw(50, tab_button, True)
-                                if button_clicked:
-                                    button.func()
-                                    button_clicked = False
+
+                            hover = pg.Rect.collidepoint(button.button_rect, mouse_x, mouse_y)
+                            button.draw(50, tab_button, hover)
+                            if button_clicked and hover:
+                                button.func()
+                                button_clicked = False
+                                renderer.text_cache.clear()
                             tab_button += 1
-                        if (civ or button is civilization or button in settings_buttons) and button.is_visible:
+                        elif (civ or button is civilization or button in settings_buttons) and button.is_visible:
                             if isinstance(button, ResearchButton):
 
-                                button.draw(400, 400, layers[button.layer].index(button))
-                                if pg.Rect.collidepoint(button.button_rect, mouse_x, mouse_y):
-                                    button.draw(400, 400, layers[button.layer].index(button), True)
-                                    if button_clicked:
-                                        if button.is_researchable():
-                                            button.func(button.id)
-                                            button.used = True
+                                hover = pg.Rect.collidepoint(button.button_rect, mouse_x, mouse_y)
+                                button.draw(400, 400, layers[button.layer].index(button), hover)
+                                if hover and button_clicked:
+                                    if button.is_researchable():
+                                        button.func(button.id)
+                                        button.used = True
+                                        renderer.text_cache.clear()
                             else:
                                 button.draw(screen_width / 2, screen_height / 2)
                                 if pg.Rect.collidepoint(button.button_rect, mouse_x, mouse_y):
@@ -1086,32 +1178,32 @@ async def main():
             humans_text = text_font.render(f'{shrink_num(humans)} {"people" if humans != 1 else "person"}', True,
                                            user_color_1)
             humans_rect = humans_text.get_rect()
-            humans_rect.center = (100, 50)
+            humans_rect.center = (120, 50)
             screen.blit(humans_text, humans_rect)
 
             food_text = text_font.render(f'{shrink_num(food)} food', True, user_color_1)
             food_rect = food_text.get_rect()
-            food_rect.center = (80, 100)
+            food_rect.center = (100, 100)
             screen.blit(food_text, food_rect)
 
             knowledge_text = text_font.render(f'{shrink_num(knowledge)} knowledge', True, user_color_1)
             knowledge_rect = knowledge_text.get_rect()
-            knowledge_rect.center = (130, 150)
+            knowledge_rect.center = (150, 150)
             screen.blit(knowledge_text, knowledge_rect)
 
             resources_text = text_font.render(f'{shrink_num(resources)} resources', True, user_color_1)
             resources_rect = resources_text.get_rect()
-            resources_rect.center = (120, 200)
+            resources_rect.center = (140, 200)
             screen.blit(resources_text, resources_rect)
 
             houses_text = text_font.render(f'{houses} houses', True, user_color_1)
             houses_rect = houses_text.get_rect()
-            houses_rect.center = (100, 250)
+            houses_rect.center = (120, 250)
             screen.blit(houses_text, houses_rect)
 
             workers = hunters + scholars + gatherers + builders
             unemployed = humans - unemployed
-            pg.display.flip()
+            renderer.update_display()
             if food > food_storage:
                 food = food_storage
             frame += 1
@@ -1130,6 +1222,7 @@ async def main():
                 if seconds % 30 == 0:
                     death()
                 work()
+                renderer.text_cache.clear()
                 frame = 0
 
         clock.tick(30)

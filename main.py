@@ -1099,17 +1099,9 @@ async def main():
                     for button in list:
                         button.enabled = False
                 renderer.render_text(f'{hunters} hunters',text_font, user_color_1,(screen_width // 2,225))
-                renderer.render_text(f'{scholars} scholars', text_font, user_color_1, (screen_width // 2, 275)) 
-                gatherer_text = text_font.render(f'{gatherers} {" gatherers" if not metallurgy.used else " miners"}',
-                                                 True,
-                                                 user_color_1)
-                gatherer_rect = gatherer_text.get_rect()
-                gatherer_rect.center = (screen_width // 2, 325)
-                screen.blit(gatherer_text, gatherer_rect)
-                builder_text = text_font.render(f'{builders} builders', True, user_color_1)
-                builder_rect = builder_text.get_rect()
-                builder_rect.center = (screen_width // 2, 375)
-                screen.blit(builder_text, builder_rect)
+                renderer.render_text(f'{scholars} scholars', text_font, user_color_1, (screen_width // 2, 275))
+                renderer.render_text(f'{gatherers} {" gatherers" if not metallurgy.used else " miners"}',text_font, user_color_1,(screen_width // 2, 325))
+                renderer.render_text(f'{builders} builders', text_font, user_color_1, (screen_width // 2, 375))
 
             if current_scene == "research":
                 for list in home_buttons, settings_buttons:
@@ -1132,11 +1124,8 @@ async def main():
                 about_rect = about_text.get_rect()
                 about_rect.center = (800, 700)
                 screen.blit(about_text, about_rect)
-                stats_text = text_font.render(f'you have played for {shrink_time(seconds)}', True,
-                                              user_color_1)
-                stats_rect = stats_text.get_rect()
-                stats_rect.center = (800, 400)
-                screen.blit(stats_text, stats_rect)
+                renderer.render_text(f'you have played for {shrink_time(seconds)}',text_font, user_color_1, (800, 400))
+
                 # button loooop
             for list in buttons_list:
                 for button in list:
@@ -1168,31 +1157,13 @@ async def main():
                                         button.func()
                                         button_clicked = False
 
-            humans_text = text_font.render(f'{shrink_num(humans)} {"people" if humans != 1 else "person"}', True,
-                                           user_color_1)
-            humans_rect = humans_text.get_rect()
-            humans_rect.center = (120, 50)
-            screen.blit(humans_text, humans_rect)
-
-            food_text = text_font.render(f'{shrink_num(food)} food', True, user_color_1)
-            food_rect = food_text.get_rect()
-            food_rect.center = (100, 100)
-            screen.blit(food_text, food_rect)
-
-            knowledge_text = text_font.render(f'{shrink_num(knowledge)} knowledge', True, user_color_1)
-            knowledge_rect = knowledge_text.get_rect()
-            knowledge_rect.center = (150, 150)
-            screen.blit(knowledge_text, knowledge_rect)
-
-            resources_text = text_font.render(f'{shrink_num(resources)} resources', True, user_color_1)
-            resources_rect = resources_text.get_rect()
-            resources_rect.center = (140, 200)
-            screen.blit(resources_text, resources_rect)
-
-            houses_text = text_font.render(f'{houses} houses', True, user_color_1)
-            houses_rect = houses_text.get_rect()
-            houses_rect.center = (120, 250)
-            screen.blit(houses_text, houses_rect)
+            renderer.render_text(f'{shrink_num(humans)} {"people" if humans != 1 else "person"}', text_font, user_color_1, (120, 50))
+            renderer.render_text(f'{shrink_num(food)} food', text_font,
+                                 user_color_1, (100, 100))
+            renderer.render_text(f'{shrink_num(knowledge)} knowledge', text_font,
+                                 user_color_1, (150, 150))
+            renderer.render_text(f'{shrink_num(resources)} resources',text_font, user_color_1, (140, 200))
+            renderer.render_text(f'{houses} houses', text_font, user_color_1, (120, 250))
 
             workers = hunters + scholars + gatherers + builders
             unemployed = humans - unemployed

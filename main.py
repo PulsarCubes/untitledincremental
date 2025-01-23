@@ -2,13 +2,16 @@ import pygame as pg
 from math import floor, ceil
 from random import uniform, randint
 import asyncio
+if __import__("sys").platform == "emscripten":
+    from platform import window
 
 #TODO age labels (v1.1)
 #TODO adjust button sizes based on window size?
 #TODO think of minigames (v1.1)
 #TODO cross session saving
 #TODO add flavor texts for research
-#TODO !!add caching for resource labels
+#TODO backup every 1m, notify when backup occurs
+#TODO add manual backup button 
 
 pg.init()
 

@@ -335,6 +335,10 @@ class ResearchButton(Button):
     def is_visible(self) -> bool:
         return False if self.layer * 300 + scroll_y + 175 < 350 or self.layer * 300 + scroll_y > screen_height - 50 else True
 
+    def recover(self,id):
+        if id == self.id:
+            self.used = True
+            research(id)
 
 def next():
     global prompt
@@ -366,15 +370,24 @@ def reset():
     for layer in layers.values():
         for button in layer:
             button.used = False
+    keys = []
+    for i in range(window.localStorage.length):
+        keys.append(window.localStorage.key(i))
+    while keys:
+        window.localStorage.removeItem(keys.pop())
 
 def backup():
     global used_buttons, knowledge, food, houses, resources, hunters, gatherers, builders, scholars
     researched = ''
+    vars = ''
     if sys.platform == "emscripten":
         for button in research_buttons:
             if button in used_buttons:
                 researched += f'{button.id}, '
         window.localStorage.setItem("untitled_incremental_research", researched)
+        for var in (knowledge, food, houses, resources, hunters, gatherers, scholars, builders):
+            vars += str(var) + ','
+
 
 
 

@@ -2,7 +2,9 @@ import pygame as pg
 from math import floor, ceil
 from random import uniform, randint
 import asyncio
-if __import__("sys").platform == "emscripten":
+import sys
+
+if sys.platform == "emscripten":
     from platform import window
 
 #TODO age labels (v1.1)
@@ -11,7 +13,7 @@ if __import__("sys").platform == "emscripten":
 #TODO cross session saving
 #TODO add flavor texts for research
 #TODO backup every 1m, notify when backup occurs
-#TODO add manual backup button 
+#TODO add manual backup button
 
 pg.init()
 
@@ -20,6 +22,7 @@ job_image = pg.image.load("media/jobs.png")
 research_image = pg.image.load("media/research.png")
 home_image = pg.image.load("media/home.png")
 
+used_buttons = []
 research_buttons = []
 prompt = 0
 research_gain = 1
@@ -363,6 +366,16 @@ def reset():
     for layer in layers.values():
         for button in layer:
             button.used = False
+
+def backup():
+    global used_buttons, knowledge, food, houses, resources, hunters, gatherers, builders, scholars
+    researched = ''
+    if sys.platform == "emscripten":
+        for button in research_buttons:
+            if button in used_buttons:
+                researched += f'{button.id}, '
+        window.localStorage.setItem("untitled_incremental_research", researched)
+
 
 
 def home_scene():
@@ -806,6 +819,7 @@ async def main():
     global prompt
     global prompts
     global screen_width, screen_height
+    global research_buttons
     tutorial = True
     prompt = 0
     forward_button = Button("Next", next, x=screen_width // 2 + 200, y=screen_height // 2 + 300)
@@ -1151,6 +1165,7 @@ async def main():
                                     if button.is_researchable():
                                         button.func(button.id)
                                         button.used = True
+                                        used_buttons.append(button)
                                         renderer.text_cache.clear()
                             else:
                                 button.draw(screen_width / 2, screen_height / 2)

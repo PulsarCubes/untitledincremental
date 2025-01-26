@@ -356,10 +356,10 @@ def skip():
 
 
 def reset():
-    global humans, food_storage, food, resources, houses, research_gain, knowledge, civ, death_scale, storage_scale, passive_food, hunters, gatherers, builders, scholars
+    global humans, food_storage, food, resources, houses, research_gain, knowledge, civ, death_scale, storage_scale, passive_food, hunters, gatherers, builders, scholars, seconds
     civ = False
-    humans, resources, houses, knowledge, passive_food, hunters, gatherers, builders, scholars = (
-        0, 0, 0, 0, 0, 0, 0, 0, 0)
+    humans, resources, houses, knowledge, passive_food, hunters, gatherers, builders, scholars, seconds = (
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
     food = 10
     research_gain = 1
     food_storage = 20
@@ -385,13 +385,13 @@ def backup():
             if button in used_buttons:
                 researched += f'{button.id} '
         window.localStorage.setItem("untitled_incremental_research", researched)
-        for var in (knowledge, food, houses, resources, humans, hunters, gatherers, scholars):
+        for var in (seconds, knowledge, food, houses, resources, humans, hunters, gatherers, scholars):
             vars += str(var) + ','
         vars += str(builders)
         window.localStorage.setItem("untitled_incremental_vars",vars)
 
 def load_save():
-    global knowledge, food, houses, resources, humans, hunters, gatherers, builders, scholars, research_buttons,tutorial
+    global seconds, knowledge, food, houses, resources, humans, hunters, gatherers, builders, scholars, research_buttons,tutorial
     if sys.platform == "emscripten":
         try:
             tutorial = False
@@ -407,7 +407,7 @@ def load_save():
                     vars_list = vars_string.split(',')
                     tutorial = False
                     vars_list = [int(val) for val in vars_list if val.strip()]
-                    knowledge, food, houses, resources, humans, hunters, gatherers, scholars, builders = vars_list
+                    seconds, knowledge, food, houses, resources, humans, hunters, gatherers, scholars, builders = vars_list
                 except (ValueError, TypeError) as e:
                     print(f'error loading variables: {e}')
                     tutorial = True

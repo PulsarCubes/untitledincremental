@@ -408,8 +408,8 @@ def load_save():
                         vars[vars.index(value)] = int(value)
 
                 knowledge, food, houses, resources, humans, hunters, gatherers, scholars, builders  = vars
-        except Exception:
-            pass
+        except TypeError:
+            print('no backup found')
 
 
 

@@ -393,7 +393,6 @@ def load_save():
     global knowledge, food, houses, resources, humans, hunters, gatherers, builders, scholars, research_buttons
     if sys.platform == "emscripten":
         researched = window.localStorage.getItem("untitled_incremental_research")
-        print(researched)
         if researched != '':
             for button in research_buttons:
                 if str(button.id) in researched:

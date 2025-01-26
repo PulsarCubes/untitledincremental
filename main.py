@@ -10,10 +10,8 @@ if sys.platform == "emscripten":
 #TODO age labels (v1.1)
 #TODO adjust button sizes based on window size?
 #TODO think of minigames (v1.1)
-#TODO cross session saving
 #TODO add flavor texts for research
-#TODO backup every 1m, notify when backup occurs
-#TODO add manual backup button
+
 
 pg.init()
 
@@ -22,6 +20,7 @@ job_image = pg.image.load("media/jobs.png")
 research_image = pg.image.load("media/research.png")
 home_image = pg.image.load("media/home.png")
 
+backup_time = 0
 used_buttons = []
 research_buttons = []
 prompt = 0
@@ -335,10 +334,9 @@ class ResearchButton(Button):
     def is_visible(self) -> bool:
         return False if self.layer * 300 + scroll_y + 175 < 350 or self.layer * 300 + scroll_y > screen_height - 50 else True
 
-    def recover(self,id):
-        if id == self.id:
-            self.used = True
-            research(id)
+    def recover(self):
+        self.used = True
+        research(self.id)
 
 def next():
     global prompt
@@ -377,17 +375,39 @@ def reset():
         window.localStorage.removeItem(keys.pop())
 
 def backup():
-    global used_buttons, knowledge, food, houses, resources, hunters, gatherers, builders, scholars
+    global used_buttons, knowledge, food, houses, resources, humans, hunters, gatherers, builders, scholars, seconds, backup_time
+    backup_time = seconds
     researched = ''
     vars = ''
     if sys.platform == "emscripten":
         for button in research_buttons:
             if button in used_buttons:
-                researched += f'{button.id}, '
+                researched += f'{button.id} '
         window.localStorage.setItem("untitled_incremental_research", researched)
-        for var in (knowledge, food, houses, resources, hunters, gatherers, scholars, builders):
+        for var in (knowledge, food, houses, resources, humans, hunters, gatherers, scholars):
             vars += str(var) + ','
+        vars += str(builders)
+        window.localStorage.setItem("untitled_incremental_vars",vars)
 
+def load_save():
+    global knowledge, food, houses, resources, humans, hunters, gatherers, builders, scholars, research_buttons
+    if sys.platform == "emscripten":
+        researched = window.localStorage.getItem("untitled_incremental_research")
+        print(researched)
+        if researched != '':
+            for button in research_buttons:
+                if str(button.id) in researched:
+                    button.recover()
+        try:
+            vars = window.localStorage.getItem("untitled_incremental_vars").split(",")
+        except AttributeError:
+            vars = ''
+        if vars != '':
+            for value in vars:
+                if value != '':
+                    vars[vars.index(value)] = int(value)
+
+            knowledge, food, houses, resources, humans, hunters, gatherers, scholars, builders  = vars
 
 
 
@@ -556,7 +576,7 @@ def research(id):
     if id == "writing" or writing.used:
         if not writing.used:
             research_gain *= 2
-            passive_knowledge = 0.1  # Small passive knowledge gain
+            passive_knowledge = 1
             knowledge -= writing.point_req
     if id == "metal" or metallurgy.used:
         gather_scale = 2
@@ -833,6 +853,7 @@ async def main():
     global prompts
     global screen_width, screen_height
     global research_buttons
+
     tutorial = True
     prompt = 0
     forward_button = Button("Next", next, x=screen_width // 2 + 200, y=screen_height // 2 + 300)
@@ -906,7 +927,7 @@ async def main():
                                                       "increases scholarly gain", "chem", 7, 6000,
                                requirements=[i for i in layer_6])
     layer_7 = [chemistry]
-    # TODO actually do this
+
     steel = ResearchButton(research, "Steel", "Make your iron stronger \n "
                                               "increase resource gain", "steel", 8, 10000,
                            requirements=[chemistry, smithing])
@@ -1047,8 +1068,9 @@ async def main():
         20: layer_20
     }
     theme_button = Button("switch theme", color_set, x=800, y=200, width=250)
-    reset_button = Button("reset game", reset, x=800, y=400, width=250)
     tutorial_button = Button("tutorial", tutorial, x=800, y=300, width=250)
+    reset_button = Button("reset game", reset, x=800, y=400, width=250)
+    backup_button = Button("backup", backup, x=800, y=500, width=250)
     tab_buttons = [home_tab, research_tab, settings_tab, about_tab]
     home_buttons = [spawn_button, build_button, hunter_increase_button, hunter_decrease_button, scholar_increase_button,
                     scholar_decrease_button, gatherer_increase_button, gatherer_decrease_button,
@@ -1056,9 +1078,11 @@ async def main():
                     builder_decrease_button]
     tutorial_buttons = [forward_button, back_button, skip_button]
     research_buttons = [button for layer in layers.values() for button in layer]
-    settings_buttons = [theme_button, reset_button, tutorial_button]
+    settings_buttons = [theme_button, reset_button, tutorial_button, backup_button]
     buttons_list = [tab_buttons, home_buttons, research_buttons, settings_buttons]
     home_scene()
+    if sys.platform == "emscripten":
+        load_save()
     while running:
         if tutorial:
             screen.fill(user_color_2)
@@ -1090,12 +1114,12 @@ async def main():
 
             for button in tutorial_buttons:
                 if pg.Rect.collidepoint(button.button_rect, mouse_x, mouse_y):
-                    button.draw(0, 0, hover=True)  # Added tut_screen parameter
+                    button.draw(0, 0, hover=True)
                     if button_clicked:
                         button.func()
                         button_clicked = False
                 else:
-                    button.draw(0, 0, hover=False)  # Draw button even when not hovering
+                    button.draw(0, 0, hover=False)
             if prompt >= len(prompts):
                 tutorial = False
             else:
@@ -1155,13 +1179,13 @@ async def main():
                 about_rect.center = (800, 700)
                 screen.blit(about_text, about_rect)
                 renderer.render_text(f'you have played for {shrink_time(seconds)}',text_font, user_color_1, (800, 400))
+                renderer.render_text(f'last backup {shrink_time(seconds-backup_time)} ago', text_font, user_color_1, (800, 500))
 
                 # button loooop
             for list in buttons_list:
                 for button in list:
                     if button.enabled:
                         if isinstance(button, TabButton):
-
                             hover = pg.Rect.collidepoint(button.button_rect, mouse_x, mouse_y)
                             button.draw(50, tab_button, hover)
                             if button_clicked and hover:
@@ -1195,10 +1219,9 @@ async def main():
                                  user_color_1, (150, 150))
             renderer.render_text(f'{shrink_num(resources)} resources',text_font, user_color_1, (140, 200))
             renderer.render_text(f'{houses} houses', text_font, user_color_1, (120, 250))
-
             workers = hunters + scholars + gatherers + builders
             unemployed = humans - unemployed
-            renderer.update_display()
+
             if food > food_storage:
                 food = food_storage
             frame += 1
@@ -1214,12 +1237,15 @@ async def main():
                     eat()
                     if food == 0:
                         humans -= ceil(humans / 10)
+
                 if seconds % 30 == 0:
                     death()
+                    backup()
+
                 work()
                 renderer.text_cache.clear()
                 frame = 0
-
+        renderer.update_display()
         clock.tick(60)
         await asyncio.sleep(0)
 

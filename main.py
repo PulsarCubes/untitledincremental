@@ -394,22 +394,22 @@ def load_save():
     if sys.platform == "emscripten":
         try:
             researched = window.localStorage.getItem("untitled_incremental_research")
-            if researched != '' or None:
+            if researched and researched != '':
                 for button in research_buttons:
                     if str(button.id) in researched:
                         button.recover()
-            try:
-                vars = window.localStorage.getItem("untitled_incremental_vars").split(",")
-            except AttributeError:
-                vars = ''
-            if vars != '':
-                for value in vars:
-                    if value != '':
-                        vars[vars.index(value)] = int(value)
+            vars_string = window.localStorage.getItem("untitled_incremental_vars")
+            if vars_string:
+                try:
+                    vars_list = vars_string.split(',')
+                    vars_list = [int(val) for val in vars_list if val.strip()]
+                    knowledge, food, houses, resources, humans, hunters, gatherers, scholars, builders = vars_list
+                except (ValueError, TypeError) as e:
+                    print(f'error loading variables: {e}')
+                    return
 
-                knowledge, food, houses, resources, humans, hunters, gatherers, scholars, builders  = vars
-        except TypeError:
-            print('no backup found')
+        except Exception as e:
+            print(f'error loading backup {e}')
 
 
 

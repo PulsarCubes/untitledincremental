@@ -529,6 +529,7 @@ def color_set():
         user_color_1 = (0, 0, 0)
         user_color_2 = (255, 255, 255)
         theme_state = 1
+    renderer.background_dirty = True
 
 
 def shrink_num(num):

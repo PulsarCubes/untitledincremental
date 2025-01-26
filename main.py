@@ -5,7 +5,7 @@ import asyncio
 import sys
 
 if sys.platform == "emscripten":
-    from platform import window
+    from platform import window, document
 
 #TODO age labels (v1.1)
 #TODO adjust button sizes based on window size?
@@ -20,6 +20,7 @@ job_image = pg.image.load("media/jobs.png")
 research_image = pg.image.load("media/research.png")
 home_image = pg.image.load("media/home.png")
 
+tutorial = True
 backup_time = 0
 used_buttons = []
 research_buttons = []
@@ -390,25 +391,30 @@ def backup():
         window.localStorage.setItem("untitled_incremental_vars",vars)
 
 def load_save():
-    global knowledge, food, houses, resources, humans, hunters, gatherers, builders, scholars, research_buttons
+    global knowledge, food, houses, resources, humans, hunters, gatherers, builders, scholars, research_buttons,tutorial
     if sys.platform == "emscripten":
         try:
+            tutorial = False
             researched = window.localStorage.getItem("untitled_incremental_research")
             if researched and researched != '':
                 for button in research_buttons:
                     if str(button.id) in researched:
                         button.recover()
+
             vars_string = window.localStorage.getItem("untitled_incremental_vars")
             if vars_string:
                 try:
                     vars_list = vars_string.split(',')
+                    tutorial = False
                     vars_list = [int(val) for val in vars_list if val.strip()]
                     knowledge, food, houses, resources, humans, hunters, gatherers, scholars, builders = vars_list
                 except (ValueError, TypeError) as e:
                     print(f'error loading variables: {e}')
+                    tutorial = True
                     return
 
         except Exception as e:
+            tutorial = True
             print(f'error loading backup {e}')
 
 
@@ -512,10 +518,14 @@ def color_set():
     global user_color_1
     global user_color_2
     if theme_state == 1:
+        if sys.platform == "emscripten":
+            document.body.style.background = "#191B1D"
         user_color_1 = (255, 255, 255)
         user_color_2 = (25, 27, 29)
         theme_state = 0
     else:
+        if sys.platform == "emscripten":
+            document.body.style.background = "#FFFFFF"
         user_color_1 = (0, 0, 0)
         user_color_2 = (255, 255, 255)
         theme_state = 1
@@ -855,8 +865,9 @@ async def main():
     global prompts
     global screen_width, screen_height
     global research_buttons
+    global tutorial
 
-    tutorial = True
+
     prompt = 0
     forward_button = Button("Next", next, x=screen_width // 2 + 200, y=screen_height // 2 + 300)
     back_button = Button("Back", back, x=screen_width // 2 - 200, y=screen_height // 2 + 300)
@@ -1085,6 +1096,7 @@ async def main():
     home_scene()
     if sys.platform == "emscripten":
         load_save()
+        document.body.style.background = "#FFFFFF"
     while running:
         if tutorial:
             screen.fill(user_color_2)

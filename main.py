@@ -392,21 +392,24 @@ def backup():
 def load_save():
     global knowledge, food, houses, resources, humans, hunters, gatherers, builders, scholars, research_buttons
     if sys.platform == "emscripten":
-        researched = window.localStorage.getItem("untitled_incremental_research")
-        if researched != '' or None:
-            for button in research_buttons:
-                if str(button.id) in researched:
-                    button.recover()
         try:
-            vars = window.localStorage.getItem("untitled_incremental_vars").split(",")
-        except AttributeError:
-            vars = ''
-        if vars != '':
-            for value in vars:
-                if value != '':
-                    vars[vars.index(value)] = int(value)
+            researched = window.localStorage.getItem("untitled_incremental_research")
+            if researched != '' or None:
+                for button in research_buttons:
+                    if str(button.id) in researched:
+                        button.recover()
+            try:
+                vars = window.localStorage.getItem("untitled_incremental_vars").split(",")
+            except AttributeError:
+                vars = ''
+            if vars != '':
+                for value in vars:
+                    if value != '':
+                        vars[vars.index(value)] = int(value)
 
-            knowledge, food, houses, resources, humans, hunters, gatherers, scholars, builders  = vars
+                knowledge, food, houses, resources, humans, hunters, gatherers, scholars, builders  = vars
+        except Exception:
+            pass
 
 
 

@@ -262,9 +262,9 @@ class ResearchButton(Button):
         else:
             color = (255, 236, 161)
 
-        pg.draw.rect(screen, color, self.button_rect ,width=5, border_radius=1)
+        pg.draw.rect(screen, color, self.button_rect, width=5, border_radius=1)
 
-        title_pos = (self.button_rect.centerx, moved_y+50)
+        title_pos = (self.button_rect.centerx, moved_y + 50)
         renderer.render_text(self.title, pg.font.SysFont('Corbel', 50, True), user_color_1, title_pos)
 
         desc_pos = (self.button_rect.centerx, moved_y + 100)
@@ -328,7 +328,6 @@ class ResearchButton(Button):
                                   self.button_rect.top - 75),
                                  4)
 
-
     def is_researchable(self) -> bool:
         return (all([req.used for req in self.requirements]) and self.point_req <= knowledge) or self.used
 
@@ -338,6 +337,7 @@ class ResearchButton(Button):
     def recover(self):
         self.used = True
         research(self.id)
+
 
 def next():
     global prompt
@@ -375,6 +375,7 @@ def reset():
     while keys:
         window.localStorage.removeItem(keys.pop())
 
+
 def backup():
     global used_buttons, knowledge, food, houses, resources, humans, hunters, gatherers, builders, scholars, seconds, backup_time
     backup_time = seconds
@@ -388,10 +389,11 @@ def backup():
         for var in (seconds, knowledge, food, houses, resources, humans, hunters, gatherers, scholars):
             vars += str(var) + ','
         vars += str(builders)
-        window.localStorage.setItem("untitled_incremental_vars",vars)
+        window.localStorage.setItem("untitled_incremental_vars", vars)
+
 
 def load_save():
-    global seconds, knowledge, food, houses, resources, humans, hunters, gatherers, builders, scholars, research_buttons,tutorial
+    global seconds, knowledge, food, houses, resources, humans, hunters, gatherers, builders, scholars, research_buttons, tutorial
     if sys.platform == "emscripten":
         try:
             tutorial = False
@@ -416,7 +418,6 @@ def load_save():
         except Exception as e:
             tutorial = True
             print(f'error loading backup {e}')
-
 
 
 def home_scene():
@@ -868,7 +869,6 @@ async def main():
     global research_buttons
     global tutorial
 
-
     prompt = 0
     forward_button = Button("Next", next, x=screen_width // 2 + 200, y=screen_height // 2 + 300)
     back_button = Button("Back", back, x=screen_width // 2 - 200, y=screen_height // 2 + 300)
@@ -938,7 +938,7 @@ async def main():
                               requirements=[iron])
     layer_6 = [mathematics, fertilizer, smithing]
     chemistry = ResearchButton(research, "Chemistry", "Basic chemistry \n "
-                                                      "increases scholarly gain", "chem", 7, 6000,
+                                                      "increases scholarly gain", "chem", 7, 6000,flavor_text="waltuh",
                                requirements=[i for i in layer_6])
     layer_7 = [chemistry]
 
@@ -968,7 +968,7 @@ async def main():
                              flavor_text="no more pheromones",
                              requirements=[steam, medicine])
     industry = ResearchButton(research, "Industrialization", "Start industrializing \n "
-                                                             "increases passive resource gain", "indus", 10, 20000,
+                                                             "increases passive resource gain", "indus", 10, 20000,flavor_text="and its consequences",
                               requirements=[steam])
     layer_10 = [hygiene, industry]
     electricity = ResearchButton(research, "Electricity", "Start producing and using electricity \n "
@@ -986,7 +986,7 @@ async def main():
                                                           "further reduce random death", "anti", 12, 30000,
                                  requirements=[i for i in layer_11])
     plastics = ResearchButton(research, "Plastics", "Invent polymers \n "
-                                                    "further reduces house price", "poly", 12, 35000,
+                                                    "further reduces house price", "poly", 12, 35000, flavor_text="macroplastics",
                               requirements=[materials])
     layer_12 = [cities, antibiotics, plastics]
     processed = ResearchButton(research, "Processed Foods", "Start processing food \n "
@@ -999,7 +999,7 @@ async def main():
                                     requirements=[i for i in layer_12])
     layer_13 = [processed, semiconductors]
     SPACE = ResearchButton(research, "Space Travel", "Go to space \n "
-                                                     "it's just cool dude", "space", 14, 50000, flavor_text="SPACESHIP",
+                                                     "it's just cool dude", "space", 14, 50000, flavor_text="SPACESHIP!!",
                            requirements=[i for i in layer_13])
     genetics = ResearchButton(research, "Semiconductors", "do genetic research \n "
                                                           "reduce random death more", "gene", 14, 55000,
@@ -1167,9 +1167,10 @@ async def main():
                 for list in research_buttons, settings_buttons:
                     for button in list:
                         button.enabled = False
-                renderer.render_text(f'{hunters} hunters',text_font, user_color_1,(screen_width // 2,225))
+                renderer.render_text(f'{hunters} hunters', text_font, user_color_1, (screen_width // 2, 225))
                 renderer.render_text(f'{scholars} scholars', text_font, user_color_1, (screen_width // 2, 275))
-                renderer.render_text(f'{gatherers} {" gatherers" if not metallurgy.used else " miners"}',text_font, user_color_1,(screen_width // 2, 325))
+                renderer.render_text(f'{gatherers} {" gatherers" if not metallurgy.used else " miners"}', text_font,
+                                     user_color_1, (screen_width // 2, 325))
                 renderer.render_text(f'{builders} builders', text_font, user_color_1, (screen_width // 2, 375))
 
             if current_scene == "research":
@@ -1193,8 +1194,9 @@ async def main():
                 about_rect = about_text.get_rect()
                 about_rect.center = (800, 700)
                 screen.blit(about_text, about_rect)
-                renderer.render_text(f'you have played for {shrink_time(seconds)}',text_font, user_color_1, (800, 400))
-                renderer.render_text(f'last backup {shrink_time(seconds-backup_time)} ago', text_font, user_color_1, (800, 500))
+                renderer.render_text(f'you have played for {shrink_time(seconds)}', text_font, user_color_1, (800, 400))
+                renderer.render_text(f'last backup {shrink_time(seconds - backup_time)} ago', text_font, user_color_1,
+                                     (800, 500))
 
                 # button loooop
             for list in buttons_list:
@@ -1227,12 +1229,13 @@ async def main():
                                         button.func()
                                         button_clicked = False
 
-            renderer.render_text(f'{shrink_num(humans)} {"people" if humans != 1 else "person"}', text_font, user_color_1, (120, 50))
+            renderer.render_text(f'{shrink_num(humans)} {"people" if humans != 1 else "person"}', text_font,
+                                 user_color_1, (120, 50))
             renderer.render_text(f'{shrink_num(food)} food', text_font,
                                  user_color_1, (100, 100))
             renderer.render_text(f'{shrink_num(knowledge)} knowledge', text_font,
                                  user_color_1, (150, 150))
-            renderer.render_text(f'{shrink_num(resources)} resources',text_font, user_color_1, (140, 200))
+            renderer.render_text(f'{shrink_num(resources)} resources', text_font, user_color_1, (140, 200))
             renderer.render_text(f'{houses} houses', text_font, user_color_1, (120, 250))
             workers = hunters + scholars + gatherers + builders
             unemployed = humans - unemployed
